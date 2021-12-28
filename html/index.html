@@ -1,0 +1,69 @@
+<html>
+<head>
+  <title>DOODS Test Interface...</title>
+</head>
+<script>
+const reader = new FileReader();
+
+function loadFile() {
+  const file = document.getElementById('file').files[0];
+  if (file) {
+    reader.readAsDataURL(file);
+    console.log("File loaded...");
+  }
+}
+
+function detectImage() {
+  const file = document.getElementById('file').files[0];
+  if (!file) {
+    alert("Select a file first...");
+    return
+  }
+
+  const image = document.getElementById('image');
+  var xmlhttp = new XMLHttpRequest();
+  xmlhttp.open("POST", "/image");
+  xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  xmlhttp.responseType = "blob";
+  let detect_config = JSON.parse(document.getElementById('detect_config').value);
+  detect_config.data = reader.result.split(',')[1];
+  xmlhttp.onload = function(e) {
+    if (this.status !== 200) {
+      this.response.text().then(function(message){alert(message)});
+      return;
+    }
+    var urlCreator = window.URL || window.webkitURL;
+    var imageUrl = urlCreator.createObjectURL(this.response);
+    image.src = imageUrl;
+  }
+  xmlhttp.send(JSON.stringify(detect_config));
+}
+
+function detectStream() {
+  window.open("/stream?url=" + document.getElementById('url').value + "&detect_config=" + encodeURIComponent(JSON.stringify(JSON.parse(document.getElementById('detect_config').value))));
+}
+
+</script>
+<body>
+<h3>DOODS Test Interface</h3>
+Detection Config<br/>
+<textarea id="detect_config" rows=15 cols=120>
+{
+  "id": "manual",
+  "detector_name": "default",
+  "preprocess": [],
+  "detect": {
+    "*": 50
+  },
+  "regions": [
+    {"top": 0.1, "left": 0.1, "bottom": 0.9, "right": 0.9, "detect": {"*":50}, "covers": false}
+  ]
+}  
+</textarea>
+<hr/>
+Image: <input id="file" type="file" onchange="loadFile()">&nbsp;&nbsp;<button type="button" onclick=detectImage()>Detect Image</button><hr/>
+URL: <input id="url" type="text" id="url" value="rtsp://user:pass@hostname:554/Streaming/Channels/101/" size="100">
+<button type="button" onclick=detectStream()>Detect Stream</button><hr/>
+<img id="image"/>
+</body>
+</html>

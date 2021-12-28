@@ -1,0 +1,10 @@
+doods:
+  detectors:
+    - name: default
+      type: tflite
+      modelFile: models/coco_ssd_mobilenet_v1_1.0_quant.tflite
+      labelFile: models/coco_labels0.txt
+    - name: tensorflow
+      type: tensorflow
+      modelFile: models/faster_rcnn_inception_v2_coco_2018_01_28.pb
+      labelFile: models/coco_labels1.txt

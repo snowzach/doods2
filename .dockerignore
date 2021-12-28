@@ -1,0 +1,13 @@
+Dockerfile
+Dockerfile.*
+.dockerignore
+.git
+__pycache__
+README.md
+example.yaml
+*.jpg
+*.png
+models
+private
+build-images.sh
+build-base-images.sh
