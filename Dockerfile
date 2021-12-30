@@ -1,9 +1,6 @@
 ARG TAG=amd64
 FROM docker.io/snowzach/doods2:base-$TAG as base
 
-ENV TAG $TAG
-RUN echo "Building docker.io/snowzach/doods2:${TAG}"
-
 COPY --from=docker.io/snowzach/doods2:base-config /opt/doods/models /opt/doods/models
 COPY --from=docker.io/snowzach/doods2:base-config /opt/doods/config.yaml /opt/doods/config.yaml
 

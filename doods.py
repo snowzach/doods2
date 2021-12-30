@@ -6,7 +6,7 @@ import cv2
 
 import odrpc
 
-from detectors.tesnorflow import Tensorflow
+from detectors.tensorflow import Tensorflow
 from detectors.tensorflow2 import Tensorflow2
 from detectors.tflite import TensorflowLite
 
