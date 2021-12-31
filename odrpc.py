@@ -1,4 +1,5 @@
-from dataclasses import field
+import json
+from dataclasses import field, asdict
 from pydantic.dataclasses import dataclass
 from typing import Optional
 from typing import Dict
@@ -17,10 +18,12 @@ class DetectRegion:
 class DetectRequest:
     id: Optional[str] = None
     detector_name: Optional[str] = None
+    image: Optional[str] = ""
+    throttle: Optional[float] = 0.0
     data: str = ""
     preprocess: List[str] = field(default_factory=list)
     detect: Dict[str, float] = field(default_factory=dict)
-    regions: List[DetectRegion] = field(default_factory=list)
+    regions: List[DetectRegion] = field(default_factory=list)    
 
 @dataclass
 class Detector:
@@ -31,6 +34,9 @@ class Detector:
     width: int = 0
     height: int = 0
 
+    def asdict(self):
+        return asdict(self)
+
 @dataclass
 class Detection:
     top: float = 0.0
@@ -40,8 +46,24 @@ class Detection:
     label: str = ""
     confidence: float = 0.0
 
+    def asdict(self):
+        return asdict(self)
+
 @dataclass
 class DetectResponse:
     id: Optional[str] = None
+    image: Optional[str] = None
     detections: List[Detection] = field(default_factory=list)
     error: Optional[str] = None
+
+    def asdict(self, include_none=True):
+        ret = asdict(self)
+        return ret if include_none else clean_none(ret)
+
+def clean_none(d):
+    for key, value in list(d.items()):
+        if value is None:
+            del d[key]
+        elif isinstance(value, dict):
+            clean_none(value)
+    return d  # For convenience

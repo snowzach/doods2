@@ -2,36 +2,43 @@ import base64
 import cv2
 import asyncio
 import odrpc
-from fastapi.responses import StreamingResponse
+import time
 from fresh_frame import FreshestFrame
 
 class Streamer:
     def __init__(self, doods):
         self.doods = doods
 
-    def start_stream(self, url, detect_request: odrpc.DetectRequest):
-        vcap = cv2.VideoCapture(url, cv2.CAP_FFMPEG)
+    def start_stream(self, detect_request: odrpc.DetectRequest):
+        vcap = cv2.VideoCapture(detect_request.data, cv2.CAP_FFMPEG)
         vcap = FreshestFrame(vcap)
+        last_frame_time = 0
         while True:
+            # Handle throttling
+            if time.time() - last_frame_time < detect_request.throttle:
+                time.sleep(detect_request.throttle - (time.time() - last_frame_time))
+            last_frame_time = time.time()
+    
+            # Get a frame
             ret, frame = vcap.read()
             if ret == False:
                 continue
-            else:
-                (flag, encodedImage) = cv2.imencode(".jpg", frame)
-                if not flag:
-                    continue
-                detect_request.data = base64.b64encode(encodedImage)
-                image = self.doods.detect(detect_request, True)
-            stop = yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(image) + b'\r\n')
+            (flag, encodedImage) = cv2.imencode(".jpg", frame)
+            if not flag:
+                continue
+            detect_request.data = base64.b64encode(encodedImage)
+            detect_response = self.doods.detect(detect_request)
+            
+            stop = yield detect_response
             if stop:
                 vcap.release()
                 return
 
     @staticmethod
-    async def streamer(gen):
+    async def mjpeg_streamer(gen):
         try:
-            for i in gen:
-                yield i
+            for detect_response in gen:
+                yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(detect_response.image) + b'\r\n')
                 await asyncio.sleep(0.01)
         except StopIteration:
             pass
@@ -40,7 +47,3 @@ class Streamer:
                 gen.send(True) # Stop
             except StopIteration:
                 pass
-
-    def stream_response(self, url, detect_request):
-        return StreamingResponse(Streamer.streamer(self.start_stream(url, detect_request)), media_type="multipart/x-mixed-replace;boundary=frame")
-

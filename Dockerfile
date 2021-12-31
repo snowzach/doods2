@@ -13,4 +13,8 @@ WORKDIR /opt/doods
 ADD . .
 
 ENV TF_CPP_MIN_LOG_LEVEL 3
-ENTRYPOINT ["python3", "main.py"]
+
+ENV SERVER_HOST 0.0.0.0
+ENV SERVER_PORT 8080
+
+ENTRYPOINT ["uvicorn", "main:app", "--host", "${SERVER_HOST}", --port "${SERVER_PORT}"]

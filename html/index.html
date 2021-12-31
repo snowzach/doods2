@@ -40,7 +40,9 @@ function detectImage() {
 }
 
 function detectStream() {
-  window.open("/stream?url=" + document.getElementById('url').value + "&detect_config=" + encodeURIComponent(JSON.stringify(JSON.parse(document.getElementById('detect_config').value))));
+  let detect_request = JSON.parse(document.getElementById('detect_config').value);
+  detect_request.data = document.getElementById('url').value;
+  window.open("/stream?detect_config=" + encodeURIComponent(JSON.stringify(detect_request)));
 }
 
 </script>

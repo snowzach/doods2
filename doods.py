@@ -22,6 +22,18 @@ fontScale              = 1.3
 thickness              = 1
 lineType               = 4
 
+# These are the valid types and the conversion to what cv2 needs.
+detect_request_image_conversion = {
+    'true'      : '.jpg',
+    '.jpg'      : '.jpg',
+    'jpg'       : '.jpg',
+    'jpeg'      : '.jpg',
+    'image/jpeg': '.jpg',
+    '.png'      : '.png',
+    'png'       : '.png',
+    'image/png' : '.png',
+}
+
 class MissingDetector:
     def __init__(self, dconfig):
         raise Exception(f'''Unknown detector type {dconfig['type']}.''')
@@ -51,7 +63,10 @@ class Doods:
         return detectors
 
     # Detect image
-    def detect(self, detect, return_image=False):
+    def detect(self, detect):
+        # Coerce the image request into something we like
+        if detect.image:
+            detect.image = detect_request_image_conversion.get(detect.image, '')
         # Get the detector
         if not detect.detector_name:
             detect.detector_name = 'default'
@@ -82,7 +97,7 @@ class Doods:
             ret.detections = Doods.filter_detections(ret.detections, detect.detect, detect.regions)
         ret.id = detect.id
 
-        if not return_image:
+        if not detect.image:
             return ret
 
         # Convert the image back to BGR for saving
@@ -108,16 +123,18 @@ class Doods:
             cv2.putText(image, "%s:%s" % (detection.label, detection.confidence), (int(detection.left*width), int(detection.top*height)-2), font, fontScale, (0, 255, 0), thickness, lineType)
             cv2.rectangle(image, (int(detection.left*width), int(detection.top*height)), (int(detection.right*width), int(detection.bottom*height)), color=(0, 255, 0), thickness=2)
 
-        return cv2.imencode('.jpg', image)[1].tostring()
+        ret.image = cv2.imencode(detect.image, image)[1].tostring()
+        return ret
 
     @staticmethod
     def filter_detections(detections, detect, regions):
         ret = {}
         for i, d in enumerate(detections):
-            if '*' in detect and d.confidence >= detect['*']:
-                ret[i] = d
-                continue
-            if d.label in detect and d.confidence >= detect[d.label]:
+            if d.label in detect:
+                if d.confidence >= detect[d.label]:
+                    ret[i] = d
+                    continue
+            elif '*' in detect and d.confidence >= detect['*']:
                 ret[i] = d
                 continue
             for r in regions:
@@ -125,10 +142,11 @@ class Doods:
                     ( r.covers and r.top <= d.top and r.left <= d.left and r.bottom >= d.bottom and r.right >= d.right ) or
                     ( not r.covers and d.top <= r.bottom and d.left <= r.right and d.bottom >= r.top and d.right >= r.left )
                 ):
-                    if '*' in r.detect and d.confidence >= r.detect['*']:
-                        ret[i] = d
-                        break
-                    if d.label in r.detect and d.confidence >= r.detect[d.label]:
+                    if d.label in r.detect:
+                        if d.confidence >= r.detect[d.label]:
+                            ret[i] = d
+                            break
+                    elif '*' in r.detect and d.confidence >= r.detect['*']:
                         ret[i] = d
                         break
         return list(ret.values())
