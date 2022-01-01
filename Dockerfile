@@ -14,7 +14,4 @@ ADD . .
 
 ENV TF_CPP_MIN_LOG_LEVEL 3
 
-ENV SERVER_HOST 0.0.0.0
-ENV SERVER_PORT 8080
-
-ENTRYPOINT ["uvicorn", "main:app", "--host", "${SERVER_HOST}", --port "${SERVER_PORT}"]
+ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]

@@ -40,9 +40,9 @@ async def image(detect_request: odrpc.DetectRequest):
     return Response(content=detect_response.image, media_type="image/jpeg")
 
 @app.get("/stream")
-async def stream(detect_config: str = '{}'):
-    detect_config_dict = json.loads(detect_config)
-    detect_request = odrpc.DetectRequest(**detect_config_dict)
+async def stream(detect_request: str = '{}'):
+    detect_request_dict = json.loads(detect_request)
+    detect_request = odrpc.DetectRequest(**detect_request_dict)
     # logger.info('stream request: %s', detect_request)
     detect_request.image = ".jpg" # Must be jpg
     return StreamingResponse(Streamer.mjpeg_streamer(Streamer(d).start_stream(detect_request)), media_type="multipart/x-mixed-replace;boundary=frame")

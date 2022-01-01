@@ -20,13 +20,9 @@ class Streamer:
             last_frame_time = time.time()
     
             # Get a frame
-            ret, frame = vcap.read()
+            ret, detect_request.data = vcap.read()
             if ret == False:
                 continue
-            (flag, encodedImage) = cv2.imencode(".jpg", frame)
-            if not flag:
-                continue
-            detect_request.data = base64.b64encode(encodedImage)
             detect_response = self.doods.detect(detect_request)
             
             stop = yield detect_response

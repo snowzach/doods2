@@ -27,46 +27,46 @@ The REST API has several endpoints for detecting objects in images as well as st
 
 ## DETECT REQUEST
 Every request to DOODS involves the detect request JSON object that looks like this.
-```json
+```jsonc
 {
-  # This ID field is user definable and will return the same ID that was passed in.
+  // This ID field is user definable and will return the same ID that was passed in.
   "id": "whatever",
-  # This is the name of the detecor to be used for this detection. If not specified, 'default' will be used.
+  // This is the name of the detecor to be used for this detection. If not specified, 'default' will be used.
   "detector_name": "default",
-  # Data is either base64 encoded image date for a single image, it may also be a URL to an image
-  # For video it's expected to be a URL that can be read by ffmpeg. "rtsp://......" is typical
+  // Data is either base64 encoded image date for a single image, it may also be a URL to an image
+  // For video it's expected to be a URL that can be read by ffmpeg. "rtsp://......" is typical
   "data": "b64 or url",
-  # The image option determines, for API calls that return an image, what format the image should be.
-  # Supported options currently are "jpeg" and "png"
+  // The image option determines, for API calls that return an image, what format the image should be.
+  // Supported options currently are "jpeg" and "png"
   "image": "jpeg",
-  # The throtle option determines, for streaming API calls only, how often it should return results.
-  # in seconds. For example, 5 means return 1 result about every 5 seconds. A value of 0 indicates
-  # it should return results as fast as it can. 
+  // The throtle option determines, for streaming API calls only, how often it should return results.
+  // in seconds. For example, 5 means return 1 result about every 5 seconds. A value of 0 indicates
+  // it should return results as fast as it can. 
   "throttle": 5,
-  # Ths is an optional list of strings of preprocessing functions to apply to the images
+  // Ths is an optional list of strings of preprocessing functions to apply to the images
   "preprocess": [
-    # grayscale changes the image to grayscale before processing  
+    // grayscale changes the image to grayscale before processing  
     "grayscale"
   ],
-  # detect is an object of label->confidence matches that will be applied to the entire image
-  # The "*" for the label name indicates it can match any label. If a specific label is listed
-  # than it cannot be matched by the wildcard. This example matches any label at 50% confidence
-  # and only car if it's confidence is over 60%.
+  // detect is an object of label->confidence matches that will be applied to the entire image
+  // The "*" for the label name indicates it can match any label. If a specific label is listed
+  // than it cannot be matched by the wildcard. This example matches any label at 50% confidence
+  // and only car if it's confidence is over 60%.
   "detect": {
     "*": 50,
     "car": 60
   },
-  # The regions array is a list of specific matches for areas within your image/video stream.
-  # When processing rules, the first detection rule to match wins. 
+  // The regions array is a list of specific matches for areas within your image/video stream.
+  // When processing rules, the first detection rule to match wins. 
   "regions": [
-    # The top,left,bottom and right are float values from 0..1 that indicate a bounding box to look
-    # for object detections. They are based on the image size. A 400x300 image with a bounding box
-    # as shown in the example blow would look for objects inside the box of
-    # {top: 300*0.1 = 30, left: 400*0.1 = 40, bottom: 300*0.9 = 270, right: 400*0.9 = 360}
-    # The detect object is exactly how it's described above in the global detection option.
-    # The covers boolean indicates if this region must completely cover the detected object or 
-    # not. If covers = true, then the detcted object must be completely inside of this region to match.
-    # If covers = false than if any part of this object is inside of this region, it will match.
+    // The top,left,bottom and right are float values from 0..1 that indicate a bounding box to look
+    // for object detections. They are based on the image size. A 400x300 image with a bounding box
+    // as shown in the example blow would look for objects inside the box of
+    // {top: 300*0.1 = 30, left: 400*0.1 = 40, bottom: 300*0.9 = 270, right: 400*0.9 = 360}
+    // The detect object is exactly how it's described above in the global detection option.
+    // The covers boolean indicates if this region must completely cover the detected object or 
+    // not. If covers = true, then the detcted object must be completely inside of this region to match.
+    // If covers = false than if any part of this object is inside of this region, it will match.
     {"top": 0.1, "left": 0.1, "bottom": 0.9, "right": 0.9, "detect": {"*":50}, "covers": false}
     ...
   ]
@@ -74,23 +74,23 @@ Every request to DOODS involves the detect request JSON object that looks like t
 ```
 
 ## DETECT RESPONSE
-```json
+```jsonc
 {
-  # This is the ID passed in the detect request.
+  // This is the ID passed in the detect request.
   "id": "whatever",
-  # If you specified a value for image in the detection request, this is the base64 encoded imge
-  # returned from the detection. It has all of the detectons bounding boxes marked with label and 
-  # confidence.
+  // If you specified a value for image in the detection request, this is the base64 encoded imge
+  // returned from the detection. It has all of the detectons bounding boxes marked with label and 
+  // confidence.
   "image": "b64 data...",
-  # Detections is a list of all of the objects detected in the image after being passed through 
-  # all of the filters. The top,left,bottom and right values are floats from 0..1 describing a 
-  # bounding box of the object in the image. The label of the object and the confidence from 0..100
-  # are also provided.
+  // Detections is a list of all of the objects detected in the image after being passed through 
+  // all of the filters. The top,left,bottom and right values are floats from 0..1 describing a 
+  // bounding box of the object in the image. The label of the object and the confidence from 0..100
+  // are also provided.
   "detections": [
     {"top": 0.1, "left": 0.1, "bottom": 0.9, "right": 0.9, "label": "dog", "confidence": 90.0 }
     ...
   ],
-  # Any errors detected in the processing
+  // Any errors detected in the processing
   "error": "any errors"
 }
 

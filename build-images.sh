@@ -1,5 +1,6 @@
 #!/bin/bash
 set -o xtrace
+set -e
 
 for name in aarch64 armv7l amd64-noavx amd64 gpu; do
     docker buildx build --pull --push --build-arg TAG="$name" -t docker.io/snowzach/doods2:$name -f Dockerfile .

@@ -3,8 +3,8 @@ import yaml
 import base64
 import numpy as np
 import cv2
-
 import odrpc
+import urllib.request
 
 from detectors.tensorflow import Tensorflow
 from detectors.tensorflow2 import Tensorflow2
@@ -64,9 +64,10 @@ class Doods:
 
     # Detect image
     def detect(self, detect):
-        # Coerce the image request into something we like
+        # Coerce the image output type into something we like
         if detect.image:
             detect.image = detect_request_image_conversion.get(detect.image, '')
+
         # Get the detector
         if not detect.detector_name:
             detect.detector_name = 'default'
@@ -76,11 +77,26 @@ class Doods:
             ret.error = "could not determine detector"
             return ret
 
-        # Decode the image
-        image_data = base64.b64decode(detect.data)
-        image_bytes = np.frombuffer(image_data, dtype=np.uint8)
-        image = cv2.imdecode(image_bytes, cv2.IMREAD_COLOR)
+        # Already an image
+        if type(detect.data) is np.ndarray:
+            image = detect.data
 
+        # If it's a url, use cv2 to read an image or frame.
+        elif detect.data.startswith("http") or detect.data.startswith("rtsp") or detect.data.startswith("ftp"):
+            cap = cv2.VideoCapture(detect.data)
+            if cap.isOpened():
+                _, image = cap.read()
+                cap.release()
+            else:
+                raise 'No Image'
+        
+        # Should be base64 encoded image
+        else:
+            # Decode the image
+            image_data = base64.b64decode(detect.data)
+            image_bytes = np.frombuffer(image_data, dtype=np.uint8)
+            image = cv2.imdecode(image_bytes, cv2.IMREAD_COLOR)
+        
         # Handle preprocessing
         for process in detect.preprocess:
             if process == 'grayscale':

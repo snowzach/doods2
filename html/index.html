@@ -1,6 +1,38 @@
 <html>
 <head>
-  <title>DOODS Test Interface...</title>
+  <title>DOODS Web Interface...</title>
+  <style>
+    body {
+      background-color: steelblue;
+      font-family: sans-serif;
+    }
+    #logo {
+      position: relative;
+      float: left;
+    }
+    #title {
+      position: relative;
+      float: left;
+    }
+    h1 {
+      color: #333333;
+      margin-left: 10px;
+    }
+    #body {
+      clear: both;
+      padding-top: 5px;
+    }
+    h4 {
+      margin: 0px;
+    }
+    #detection_request_header {
+      display: flex;
+      align-items: center;
+    }
+    #detect_request {
+      width: 90%;
+    }
+    </style>
 </head>
 <script>
 const reader = new FileReader();
@@ -19,14 +51,34 @@ function detectImage() {
     alert("Select a file first...");
     return
   }
-
-  const image = document.getElementById('image');
+  let detect_request = JSON.parse(document.getElementById('detect_request').value);
+  detect_request.data = reader.result.split(',')[1];
+  
   var xmlhttp = new XMLHttpRequest();
   xmlhttp.open("POST", "/image");
   xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
   xmlhttp.responseType = "blob";
-  let detect_config = JSON.parse(document.getElementById('detect_config').value);
-  detect_config.data = reader.result.split(',')[1];
+  xmlhttp.onload = function(e) {
+    if (this.status !== 200) {
+      this.response.text().then(function(message){alert(message)});
+      return;
+    }
+    var urlCreator = window.URL || window.webkitURL;
+    var imageUrl = urlCreator.createObjectURL(this.response);
+    const image = document.getElementById('image');
+    image.src = imageUrl;
+  }
+  xmlhttp.send(JSON.stringify(detect_request));
+}
+
+function detectUrlImage() {
+  let detect_request = JSON.parse(document.getElementById('detect_request').value);
+  detect_request.data = document.getElementById('url').value;
+
+  var xmlhttp = new XMLHttpRequest();
+  xmlhttp.open("POST", "/image");
+  xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  xmlhttp.responseType = "blob";
   xmlhttp.onload = function(e) {
     if (this.status !== 200) {
       this.response.text().then(function(message){alert(message)});
@@ -36,20 +88,31 @@ function detectImage() {
     var imageUrl = urlCreator.createObjectURL(this.response);
     image.src = imageUrl;
   }
-  xmlhttp.send(JSON.stringify(detect_config));
+  xmlhttp.send(JSON.stringify(detect_request));
 }
 
-function detectStream() {
-  let detect_request = JSON.parse(document.getElementById('detect_config').value);
+function detectUrlStream() {
+  let detect_request = JSON.parse(document.getElementById('detect_request').value);
   detect_request.data = document.getElementById('url').value;
-  window.open("/stream?detect_config=" + encodeURIComponent(JSON.stringify(detect_request)));
+  window.open("/stream?detect_request=" + encodeURIComponent(JSON.stringify(detect_request)));
 }
 
 </script>
 <body>
-<h3>DOODS Test Interface</h3>
-Detection Config<br/>
-<textarea id="detect_config" rows=15 cols=120>
+<div id="logo"><img src="doods.jpg"/></div>
+<div id="title"><h1>DOODS Web Interface</h3></div>
+<div id="body">
+<hr/>
+<div id=detection_request_header>
+  Detection Request
+  &nbsp;&nbsp;
+  <a href="https://github.com/snowzach/doods2#detect-request" target="_blank">
+    <img src="link.png"/>
+  </a>
+</div>
+<h4></h4>
+
+<textarea id="detect_request" rows=12>
 {
   "id": "manual",
   "detector_name": "default",
@@ -63,9 +126,22 @@ Detection Config<br/>
 }  
 </textarea>
 <hr/>
-Image: <input id="file" type="file" onchange="loadFile()">&nbsp;&nbsp;<button type="button" onclick=detectImage()>Detect Image</button><hr/>
-URL: <input id="url" type="text" id="url" value="rtsp://user:pass@hostname:554/Streaming/Channels/101/" size="100">
-<button type="button" onclick=detectStream()>Detect Stream</button><hr/>
+
+Image:
+<input id="file" type="file" onchange="loadFile()">
+&nbsp;&nbsp;
+<button type="button" onclick=detectImage()>Detect Image</button>
+<hr/>
+
+URL: 
+<input id="url" type="text" id="url" value="rtsp://user:pass@hostname:554/Streaming/Channels/101/" size="100">
+<button type="button" onclick=detectUrlImage()>Detect Image</button>
+<button type="button" onclick=detectUrlStream()>Detect Stream</button>
+<br/>
+Supports http://, https://, ftp:// or rtsp:// for both an image or video stream. (Detect stream willl only work with a video stream)
+<hr/>
+
 <img id="image"/>
+</div>
 </body>
 </html>
