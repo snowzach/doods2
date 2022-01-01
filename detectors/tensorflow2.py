@@ -9,10 +9,10 @@ import odrpc
 class Tensorflow2:
     def __init__(self, config):
         self.config = odrpc.Detector(**{
-            'name': config['name'],
+            'name': config.name,
             'type': 'tensorflow2',
             'labels': [],
-            'model': config['modelFile']
+            'model': config.modelFile
         })
 
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'    # Suppress TensorFlow logging (1)
@@ -24,8 +24,8 @@ class Tensorflow2:
             tf.config.experimental.set_memory_growth(gpu, True)
 
         # Load pipeline config and build a detection model
-        PATH_TO_CKPT = os.path.join(config['modelFile'], 'checkpoint/')
-        PATH_TO_CFG = os.path.join(config['modelFile'], 'pipeline.config')
+        PATH_TO_CKPT = os.path.join(config.modelFile, 'checkpoint/')
+        PATH_TO_CFG = os.path.join(config.modelFile, 'pipeline.config')
         if not os.path.exists(PATH_TO_CKPT):
             raise Exception("Missing checkpoint file")
 
@@ -37,11 +37,11 @@ class Tensorflow2:
         ckpt = tf.compat.v2.train.Checkpoint(model=self.detection_model)
         ckpt.restore(os.path.join(PATH_TO_CKPT, 'ckpt-0')).expect_partial()
 
-        if not os.path.exists(config['labelFile']):
+        if not os.path.exists(config.labelFile):
             raise Exception("Missing labels file")
 
         # Load the labels and put into the config
-        self.category_index = label_map_util.create_category_index_from_labelmap(config['labelFile'], use_display_name=True)
+        self.category_index = label_map_util.create_category_index_from_labelmap(config.labelFile, use_display_name=True)
         for i in self.category_index:
             self.config.labels.append(self.category_index[i]['name'])
 

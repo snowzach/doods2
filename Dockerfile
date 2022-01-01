@@ -14,4 +14,5 @@ ADD . .
 
 ENV TF_CPP_MIN_LOG_LEVEL 3
 
-ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+ENTRYPOINT ["python3", "main.py"]
+CMD ["api"]

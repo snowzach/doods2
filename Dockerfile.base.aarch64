@@ -22,4 +22,5 @@ RUN echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" |
     rm -rf /var/lib/apt/lists/*
 
 # Install python libs
-RUN python3 -m pip install uvicorn websockets pydantic fastapi paho-mqtt
+ADD requirements.txt /tmp/requirements.txt
+RUN python3 -m pip install -r /tmp/requirements.txt && rm /tmp/requirements.txt

@@ -32,6 +32,10 @@
     #detect_request {
       width: 90%;
     }
+    #detectors {
+      width: 90%;
+      height: 100vh;
+    }
     </style>
 </head>
 <script>
@@ -67,6 +71,8 @@ function detectImage() {
     var imageUrl = urlCreator.createObjectURL(this.response);
     const image = document.getElementById('image');
     image.src = imageUrl;
+    image.hidden = false;
+    document.getElementById('detectors').hidden = true;
   }
   xmlhttp.send(JSON.stringify(detect_request));
 }
@@ -86,7 +92,10 @@ function detectUrlImage() {
     }
     var urlCreator = window.URL || window.webkitURL;
     var imageUrl = urlCreator.createObjectURL(this.response);
+    const image = document.getElementById('image');
     image.src = imageUrl;
+    image.hidden = false;
+    document.getElementById('detectors').hidden = true;
   }
   xmlhttp.send(JSON.stringify(detect_request));
 }
@@ -96,6 +105,25 @@ function detectUrlStream() {
   detect_request.data = document.getElementById('url').value;
   window.open("/stream?detect_request=" + encodeURIComponent(JSON.stringify(detect_request)));
 }
+
+function getDetectors() {
+  var xmlhttp = new XMLHttpRequest();
+  xmlhttp.open("GET", "/detectors");
+  xmlhttp.onload = function(e) {
+    if (this.status !== 200) {
+      this.response.text().then(function(message){alert(message)});
+      return;
+    }
+    const detectors = document.getElementById('detectors');
+    // Parse the json response
+    response = JSON.parse(this.response);
+    detectors.innerHTML = JSON.stringify(response, null, 2);
+    detectors.hidden = false;
+    document.getElementById('image').hidden = true;
+  }
+  xmlhttp.send(JSON.stringify(detect_request));
+}
+
 
 </script>
 <body>
@@ -109,6 +137,8 @@ function detectUrlStream() {
   <a href="https://github.com/snowzach/doods2#detect-request" target="_blank">
     <img src="link.png"/>
   </a>
+  &nbsp;&nbsp;
+  <button type="button" onclick=getDetectors()>Show Configured Detectors</button>
 </div>
 <h4></h4>
 
@@ -141,7 +171,8 @@ URL:
 Supports http://, https://, ftp:// or rtsp:// for both an image or video stream. (Detect stream willl only work with a video stream)
 <hr/>
 
-<img id="image"/>
+<img id="image" hidden="true"/>
+<textarea id="detectors" hidden="true" rows=12></textarea>
 </div>
 </body>
 </html>

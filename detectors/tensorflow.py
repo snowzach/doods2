@@ -7,13 +7,13 @@ from detectors.labels import load_labels
 class Tensorflow:
     def __init__(self, config):
         self.config = odrpc.Detector(**{
-            'name': config['name'],
+            'name': config.name,
             'type': 'tensorflow2',
             'labels': [],
-            'model': config['modelFile']
+            'model': config.modelFile
         })
 
-        self.detection_graph = Tensorflow.load_pb(config['modelFile'])
+        self.detection_graph = Tensorflow.load_pb(config.modelFile)
 
         self.image_tensor = self.detection_graph.get_tensor_by_name('image_tensor:0')
         self.d_boxes = self.detection_graph.get_tensor_by_name('detection_boxes:0')
@@ -22,7 +22,7 @@ class Tensorflow:
         self.num_d = self.detection_graph.get_tensor_by_name('num_detections:0')
         self.sess = tf.Session(graph=self.detection_graph)
 
-        self.labels = load_labels(config['labelFile'])
+        self.labels = load_labels(config.labelFile)
         for i in self.labels:
             self.config.labels.append(self.labels[i])
 

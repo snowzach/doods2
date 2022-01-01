@@ -1,10 +1,7 @@
-import os
-import yaml
 import base64
 import numpy as np
 import cv2
 import odrpc
-import urllib.request
 
 from detectors.tensorflow import Tensorflow
 from detectors.tensorflow2 import Tensorflow2
@@ -39,21 +36,15 @@ class MissingDetector:
         raise Exception(f'''Unknown detector type {dconfig['type']}.''')
 
 class Doods:
-    def __init__(self):
-        # Load config file
-        config_file = os.environ.get('CONFIG_FILE', 'config.yaml')
-        with open(config_file, 'r') as stream:
-            try:
-                self.config = yaml.safe_load(stream)
-            except yaml.YAMLError as exc:
-                print(exc)
+    def __init__(self, config):
+        self.config = config
 
         # Initialize the detectors
         self._detectors = {}
-        for dconfig in self.config['doods']['detectors']:
-            detector_class = detectors.get(dconfig['type'], MissingDetector)
+        for dconfig in self.config.detectors:
+            detector_class = detectors.get(dconfig.type, MissingDetector)
             detector = detector_class(dconfig)
-            self._detectors[dconfig['name']] = detector
+            self._detectors[dconfig.name] = detector
 
     # Get the detectors configs
     def detectors(self):

@@ -2,28 +2,29 @@ from tensorflow.lite.python.interpreter import Interpreter
 import numpy as np
 import cv2
 import odrpc
+from config import DoodsDetectorConfig
 from detectors.labels import load_labels
 
 input_mean = 127.5
 input_std = 127.5
 
 class TensorflowLite:
-    def __init__(self, config):
+    def __init__(self, config: DoodsDetectorConfig):
         self.config = odrpc.Detector(**{
-            'name': config['name'],
+            'name': config.name,
             'type': 'tensorflow2',
             'labels': [],
-            'model': config['modelFile']
+            'model': config.modelFile,
         })
 
         # Load the Tensorflow Lite model.
         # If using Edge TPU, use special load_delegate argument
-        if 'hwAccel' in config and config['hwAccel']:
+        if 'hwAccel' in config and config.hwAccel:
             from tensorflow.lite.python.interpreter import load_delegate
-            self.interpreter = Interpreter(model_path=config['modelFile'],
+            self.interpreter = Interpreter(model_path=config.modelFile,
                                     experimental_delegates=[load_delegate('libedgetpu.so.1.0')])
         else:
-            self.interpreter = Interpreter(model_path=config['modelFile'])
+            self.interpreter = Interpreter(model_path=config.modelFile)
         
         self.interpreter.allocate_tensors()
 
@@ -35,7 +36,7 @@ class TensorflowLite:
         self.floating_model = (self.input_details[0]['dtype'] == np.float32)
 
         # Load labels
-        self.labels = load_labels(config['labelFile'])
+        self.labels = load_labels(config.labelFile)
         for i in self.labels:
             self.config.labels.append(self.labels[i])
 
