@@ -1,4 +1,5 @@
 import base64
+import logging
 import numpy as np
 import cv2
 import odrpc
@@ -38,12 +39,17 @@ class MissingDetector:
 class Doods:
     def __init__(self, config):
         self.config = config
+        self.logger = logging.getLogger('uvicorn.access')
 
         # Initialize the detectors
         self._detectors = {}
         for dconfig in self.config.detectors:
             detector_class = detectors.get(dconfig.type, MissingDetector)
-            detector = detector_class(dconfig)
+            try:
+                detector = detector_class(dconfig)
+            except Exception as e:
+                self.logger.error(e)
+                continue
             self._detectors[dconfig.name] = detector
 
     # Get the detectors configs

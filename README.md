@@ -21,6 +21,17 @@ Two detectors are included with the base image that you can try.
 - default - coco_ssd_mobilenet_v1_1.0_quant.tflite - A decent and fast Tensorflow light object detector.
 - tensorflow - faster_rcnn_inception_v2_coco_2018_01_28.pb - A much slower but more accurate Tensorflow object detector.
 
+## Docker Images
+DOODS2 is distributed in a docker image. There are several tags you can reference to pick the image you like.
+- armv7l - 32 bit ARM devices with a v7 CPU like the Raspberry Pi
+- aarch64 - 64 bit ARM devices with a v8 CPU (Raspberry Pi 64 bit, ODroid, etc)
+- noavx - 64 bit x86_64 architecture WITHOUT avx support. This should run on just about everything.
+- latest - The `latest` tag references the above 3 tags so if you pick latest it should work on just about everything.
+
+Additional more optimized tags are available:
+- amd64 - 64 bit x86_64 architecture WITH avx support. This should be faster than the noavx image on newer processors.
+- gpu - 64 bit x86_64 architecture with NVidia GPU support. See the section below on how to run this.
+
 # REST API
 The REST API has several endpoints for detecting objects in images as well as streams. Details of the payloads and endpoints are below.
 
@@ -168,11 +179,41 @@ In the config you need to set the `hwAccel` boolean to true for the model and it
 As well, you will need to pass the edgeTPU device to DOODS. This is typically done with the docker flag `--device=/dev/bus/usb`
 or in a docker-compose file with:
 ```yaml
-  devices:
-    - /dev/bus/usb
+version: '3.2'
+services:
+  doods:
+    image: snowzach/doods2:gpu
+    ports:
+      - "8080:8080"
+    devices:
+      - /dev/bus/usb
 ```
 
 You can download models for the edgeTPU here: https://coral.ai/models/object-detection
+
+# GPU Support
+NVidia GPU support is available in the `:gpu` tagged image. This requires the host machine have NVidia CUDA installed as well as
+Docker 19.03 and above with the `nvidia-container-toolkit`. 
+
+See this page on how to install the CUDA drives and the container toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
+
+You need to tell docker to pass the GPU through for DOODS to use. You can do this with the docker run command by adding `--gpus all` to the command.
+You can also do this with docker-compose by adding this to the DOODS container specification:
+```yaml
+version: '3.2'
+services:
+  doods:
+    image: snowzach/doods2:gpu
+    ports:
+      - "8080:8080"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+```
 
 # Supported Detectors / Models
 There are currently 3 supported dectector formats

@@ -19,10 +19,17 @@ class TensorflowLite:
 
         # Load the Tensorflow Lite model.
         # If using Edge TPU, use special load_delegate argument
-        if 'hwAccel' in config and config.hwAccel:
+        if config.hwAccel:
             from tensorflow.lite.python.interpreter import load_delegate
-            self.interpreter = Interpreter(model_path=config.modelFile,
-                                    experimental_delegates=[load_delegate('libedgetpu.so.1.0')])
+            try:
+                self.interpreter = Interpreter(model_path=config.modelFile,
+                    experimental_delegates=[load_delegate('libedgetpu.so.1.0')])
+            # This might fail the first time as this seems to load the drivers for the EdgeTPU the first time.
+            # Doing it again will load the driver. 
+            except ValueError:
+                self.interpreter = Interpreter(model_path=config.modelFile,
+                    experimental_delegates=[load_delegate('libedgetpu.so.1.0')])
+
         else:
             self.interpreter = Interpreter(model_path=config.modelFile)
         
