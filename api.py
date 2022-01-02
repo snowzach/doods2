@@ -7,7 +7,6 @@ import asyncio
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from typing import List
 from streamer import Streamer
 
 class API():
@@ -18,9 +17,9 @@ class API():
         # Borrow the uvicorn logger because it's pretty.
         self.logger = logging.getLogger("uvicorn.doods")
 
-        @self.api.get("/detectors", response_model=List[odrpc.Detector], response_model_exclude_none=True)
+        @self.api.get("/detectors", response_model=odrpc.DetectorsResponse, response_model_exclude_none=True)
         async def detectors():
-            return self.doods.detectors()
+            return odrpc.DetectorsResponse(detectors=self.doods.detectors())
 
         @self.api.post("/detect", response_model=odrpc.DetectResponse, response_model_exclude_none=True)
         async def detect(detect_request: odrpc.DetectRequest):

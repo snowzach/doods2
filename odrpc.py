@@ -38,6 +38,14 @@ class Detector:
         return asdict(self)
 
 @dataclass
+class DetectorsResponse:
+    detectors: List[Detector] = field(default_factory=list)
+
+    def asdict(self, include_none=True):
+        ret = asdict(self)
+        return ret if include_none else clean_none(ret)
+
+@dataclass
 class Detection:
     top: float = 0.0
     left: float = 0.0

@@ -4,7 +4,9 @@ Dedicated Open Object Detection Service - Yes, it's a backronym...
 DOODS is a REST service that detects objects in images or video streams. It's designed to be very easy to use, run as a container and available remotely.
 It also supports GPUs and EdgeTPU hardware acceleration.
 
-DOODS2 is a rewrite of [DOODS](https://github.com/snowzach/doods) in Python.
+DOODS2 is a rewrite of [DOODS](https://github.com/snowzach/doods) in Python. It supports the exact same
+REST api endpoints as the original DOODS but it also includes endpoints for handling streaming feeds with realtime
+feedback as annotated video and websocket JSON detection data.
 
 Why Python you may ask... Well, lots of machine learning stuff is in Python and there is pretty good support for
 Object Detection and helpers in Python. Maintaining the code in Go was a huge pain. 
