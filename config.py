@@ -12,7 +12,6 @@ class DoodsDetectorConfig(BaseSettings):
 
 class DoodsConfig(BaseSettings):
     detectors: List[DoodsDetectorConfig]
-    auth_key: Optional[str] = ""
     class Config:
         env_prefix = 'doods_'
         extra = Extra.ignore
@@ -26,6 +25,7 @@ class LoggerConfig(BaseSettings):
 class ServerConfig(BaseSettings):
     host: Optional[str] = "0.0.0.0"
     port: Optional[int] = 8080
+    auth_key: Optional[str] = ""
     class Config:
         env_prefix = 'server_'
         extra = Extra.ignore
