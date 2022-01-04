@@ -1,13 +1,9 @@
 .vscode
-*.txt
 *.png
 *.bmp
 *.ppm
 *.jpg
-*.tflite
-*.zip
 private
 models
 example.yaml
 __pycache__
-

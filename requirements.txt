@@ -1,0 +1,5 @@
+fastapi==0.70.1
+paho-mqtt==1.6.1
+pydantic==1.8.2
+uvicorn==0.16.0
+websockets==10.1

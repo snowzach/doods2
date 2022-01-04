@@ -5,8 +5,6 @@ import base64
 import logging
 import asyncio
 import threading
-import queue
-import time
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
