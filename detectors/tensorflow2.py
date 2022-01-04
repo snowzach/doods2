@@ -71,9 +71,10 @@ class Tensorflow2:
             detection = odrpc.Detection()
             (detection.top, detection.left, detection.bottom, detection.right) = boxes[i].tolist()
             detection.confidence = scores[i] * 100.0
-            label = self.category_index[int(classes[i])+1]
-            if label:
-                detection.label = label["name"]
+            if int(classes[i])+1 in self.category_index:
+                detection.label = self.category_index[int(classes[i])+1]
+            else:
+                detection.label = "unknown"
             ret.detections.append(detection)
 
         return ret

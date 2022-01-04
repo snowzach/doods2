@@ -12,7 +12,7 @@ class TensorflowLite:
     def __init__(self, config: DoodsDetectorConfig):
         self.config = odrpc.Detector(**{
             'name': config.name,
-            'type': 'tensorflow2',
+            'type': 'tflite',
             'labels': [],
             'model': config.modelFile,
         })
@@ -69,9 +69,10 @@ class TensorflowLite:
             detection = odrpc.Detection()
             (detection.top, detection.left, detection.bottom, detection.right) = boxes[i].tolist()
             detection.confidence = scores[i] * 100.0
-            label = self.labels[int(classes[i])]
-            if label:
-                detection.label = label
+            if int(classes[i]) in self.labels:
+                detection.label = self.labels[int(classes[i])]
+            else:
+                detection.label = "unknown"
             ret.detections.append(detection)
         return ret
 
