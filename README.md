@@ -125,6 +125,12 @@ This API call returns the configured detectors on DOODS and includes the list of
 This API call takes a JSON [Detect Request](#detect-request) in the POST body and returns a JSON [Detect Response](#detect-response)
 with the detections.
 
+### WS - /detect
+This is a websocket endpoint that works exactly how the `/detect` API works except that you may
+send in many JSON [Detect Request](#detect-request) messages and it will process them asynchronously
+and return the responses. You should use unique `id` field values in the request to tell the responses 
+apart.
+
 ### POST /image
 This API call takes a JSON [Detect Request](#detect-request) in the POST body and returns an image as specified in the 
 image propert of the Detect Request with all of the bounding boxes drawn with labels and confidence. This is equivalent

@@ -4,6 +4,9 @@ import json
 import base64
 import logging
 import asyncio
+import threading
+import queue
+import time
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -29,6 +32,46 @@ class API():
             if detect_request.image:
                 detect_response.image = base64.b64encode(detect_response.image)
             return detect_response
+        
+        @self.api.websocket("/detect")
+        async def detect_stream(websocket: WebSocket):
+            await websocket.accept()
+            detect_responses = asyncio.Queue()
+            async def detect_handle(detect_request: odrpc.DetectRequest):
+                try:
+                    detect_response = self.doods.detect(detect_request)
+                    if detect_request.image:
+                        detect_response.image = base64.b64encode(detect_response.image)
+                    await detect_responses.put(detect_response)
+                except Exception as e:
+                    self.logger.error(e)
+
+            def detect_thread(detect_request: odrpc.DetectRequest):
+                try:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    loop.run_until_complete(detect_handle(detect_request))
+                    loop.close()
+                except Exception as e:
+                    self.logger.error(e)
+
+            async def send_detect_responses():
+                try:
+                    while True:
+                        detect_response = await detect_responses.get()
+                        await websocket.send_json(detect_response.asdict(include_none=False))
+                except Exception as e:
+                    self.logger.error(e)
+
+            send_detect_responses_task = asyncio.create_task(send_detect_responses())
+            
+            try:
+                while True:
+                    detect_config = await websocket.receive_json()
+                    detect_request = odrpc.DetectRequest(**detect_config)
+                    threading.Thread(target=detect_thread, args=(detect_request,)).start()
+            except Exception as e:
+                send_detect_responses_task.cancel()
 
         @self.api.post("/image")
         async def image(detect_request: odrpc.DetectRequest):
