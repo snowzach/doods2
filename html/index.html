@@ -55,7 +55,12 @@ function detectImage() {
     alert("Select a file first...");
     return
   }
-  let detect_request = JSON.parse(document.getElementById('detect_request').value);
+  try {
+    var detect_request = JSON.parse(document.getElementById('detect_request').value);
+  } catch (error) {
+    alert('could not parse detect request: '+error)
+    return
+  }
   detect_request.data = reader.result.split(',')[1];
   
   var xmlhttp = new XMLHttpRequest();
@@ -78,7 +83,12 @@ function detectImage() {
 }
 
 function detectUrlImage() {
-  let detect_request = JSON.parse(document.getElementById('detect_request').value);
+  try {
+    var detect_request = JSON.parse(document.getElementById('detect_request').value);
+  } catch (error) {
+    alert('could not parse detect request: '+error)
+    return
+  }
   detect_request.data = document.getElementById('url').value;
 
   var xmlhttp = new XMLHttpRequest();
@@ -101,7 +111,12 @@ function detectUrlImage() {
 }
 
 function detectUrlStream() {
-  let detect_request = JSON.parse(document.getElementById('detect_request').value);
+  try {
+    var detect_request = JSON.parse(document.getElementById('detect_request').value);
+  } catch (error) {
+    alert('could not parse detect request: '+error)
+    return
+  }
   detect_request.data = document.getElementById('url').value;
   window.open("/stream?detect_request=" + encodeURIComponent(JSON.stringify(detect_request)));
 }
@@ -123,7 +138,6 @@ function getDetectors() {
   }
   xmlhttp.send(JSON.stringify(detect_request));
 }
-
 
 </script>
 <body>

@@ -68,6 +68,8 @@ class Doods:
         # Get the detector
         if not detect.detector_name:
             detect.detector_name = 'default'
+        if not detect.detector_name in self._detectors:
+            return odrpc.DetectResponse(error="unknown detector name: %s" % detect.detector_name)
         detector = self._detectors[detect.detector_name]
         if not detector:
             ret = odrpc.DetectResponse

@@ -38,8 +38,8 @@ class TensorflowLite:
         # Get model details
         self.input_details = self.interpreter.get_input_details()
         self.output_details = self.interpreter.get_output_details()
-        self.height = self.input_details[0]['shape'][1]
-        self.width = self.input_details[0]['shape'][2]
+        self.config.height = self.input_details[0]['shape'][1]
+        self.config.width = self.input_details[0]['shape'][2]
         self.floating_model = (self.input_details[0]['dtype'] == np.float32)
 
         # Load labels
@@ -49,7 +49,7 @@ class TensorflowLite:
 
     def detect(self, image):
 
-        image_resized = cv2.resize(image, (self.width, self.height))
+        image_resized = cv2.resize(image, (self.config.width, self.config.height))
         input_data = np.expand_dims(image_resized, axis=0)
 
         # Normalize pixel values if using a floating model (i.e. if model is non-quantized)

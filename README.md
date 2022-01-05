@@ -45,7 +45,7 @@ Every request to DOODS involves the Detect Request JSON object that looks like t
   "id": "whatever",
   // This is the name of the detector to be used for this detection. If not specified, 'default' will be used if it exists.
   "detector_name": "default",
-  // Data is either base64 encoded image date for a single image, it may also be a URL to an image
+  // Data is either base64 encoded image data for a single image, it may also be a URL to an image
   // For a stream it's expected to be a URL that can be read by ffmpeg. `rtsp://..` or `http://..` is typical.
   // You can also provide a video URL to detect a single image. It will grab a single frame from the source to 
   // run detection on. (It may be kinda slow though)

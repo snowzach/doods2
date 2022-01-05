@@ -5,7 +5,7 @@ import base64
 import logging
 import asyncio
 import threading
-from fastapi import FastAPI, WebSocket
+from fastapi import status, FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from streamer import Streamer
@@ -23,9 +23,11 @@ class API():
             return odrpc.DetectorsResponse(detectors=self.doods.detectors())
 
         @self.api.post("/detect", response_model=odrpc.DetectResponse, response_model_exclude_none=True)
-        async def detect(detect_request: odrpc.DetectRequest):
+        async def detect(detect_request: odrpc.DetectRequest, response: Response):
             # logger.info('detect request: %s', detect_request)
             detect_response = self.doods.detect(detect_request)
+            if detect_response.error:
+                response.status_code = status.HTTP_400_BAD_REQUEST
             # If we requested an image, base64 encode it back to the user
             if detect_request.image:
                 detect_response.image = base64.b64encode(detect_response.image)
@@ -42,7 +44,7 @@ class API():
                         detect_response.image = base64.b64encode(detect_response.image)
                     await detect_responses.put(detect_response)
                 except Exception as e:
-                    self.logger.error(e)
+                    self.logger.error("Exception({0}):{1!r}".format(type(e).__name__, e.args))
 
             def detect_thread(detect_request: odrpc.DetectRequest):
                 try:
@@ -51,7 +53,7 @@ class API():
                     loop.run_until_complete(detect_handle(detect_request))
                     loop.close()
                 except Exception as e:
-                    self.logger.error(e)
+                    self.logger.error("Exception({0}):{1!r}".format(type(e).__name__, e.args))
 
             async def send_detect_responses():
                 try:
@@ -59,24 +61,33 @@ class API():
                         detect_response = await detect_responses.get()
                         await websocket.send_json(detect_response.asdict(include_none=False))
                 except Exception as e:
-                    self.logger.error(e)
+                    self.logger.error("Exception({0}):{1!r}".format(type(e).__name__, e.args))
 
             send_detect_responses_task = asyncio.create_task(send_detect_responses())
             
-            try:
-                while True:
+            while True:
+                try:
                     detect_config = await websocket.receive_json()
                     detect_request = odrpc.DetectRequest(**detect_config)
                     threading.Thread(target=detect_thread, args=(detect_request,)).start()
-            except Exception as e:
-                send_detect_responses_task.cancel()
+                except TypeError:
+                    await detect_responses.put(odrpc.DetectResponse(error='could not parse request body'))
+                except WebSocketDisconnect:
+                    send_detect_responses_task.cancel()
+                    break
+                except Exception as e:
+                    self.logger.error("Exception({0}):{1!r}".format(type(e).__name__, e.args))
+                    send_detect_responses_task.cancel()
+                    break
 
         @self.api.post("/image")
-        async def image(detect_request: odrpc.DetectRequest):
+        async def image(detect_request: odrpc.DetectRequest, response: Response):
             # logger.info('image request: %s', detect_request)
             if not detect_request.image:
                 detect_request.image = ".jpg"
             detect_response = self.doods.detect(detect_request)
+            if detect_response.error:
+                return Response(status_code=status.HTTP_400_BAD_REQUEST, content=detect_response.error)
             return Response(content=detect_response.image, media_type="image/jpeg")
 
         @self.api.get("/stream")

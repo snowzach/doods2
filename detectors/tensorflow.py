@@ -26,6 +26,8 @@ class Tensorflow:
         for i in self.labels:
             self.config.labels.append(self.labels[i])
 
+        print(self.image_tensor.get_shape())
+
     def detect_fn(self, image):
         # Bounding Box Detection.
         with self.detection_graph.as_default():
