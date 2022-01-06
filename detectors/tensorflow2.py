@@ -1,4 +1,5 @@
 import os
+import logging
 import tensorflow as tf
 from object_detection.utils import label_map_util
 from object_detection.utils import config_util
@@ -14,6 +15,7 @@ class Tensorflow2:
             'labels': [],
             'model': config.modelFile
         })
+        self.logger = logging.getLogger("doods.tf2."+config.name)
 
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'    # Suppress TensorFlow logging (1)
         tf.get_logger().setLevel('ERROR')           # Suppress TensorFlow logging (2)

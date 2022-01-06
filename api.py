@@ -16,7 +16,7 @@ class API():
         self.doods = doods
         self.api = FastAPI()
         # Borrow the uvicorn logger because it's pretty.
-        self.logger = logging.getLogger("uvicorn.doods")
+        self.logger = logging.getLogger("doods.api")
 
         @self.api.get("/detectors", response_model=odrpc.DetectorsResponse, response_model_exclude_none=True)
         async def detectors():
@@ -132,5 +132,9 @@ class API():
         self.api.mount("/", StaticFiles(directory="html", html=True), name="static")
         
     def run(self):
-        uvicorn.run(self.api, host=self.config.host, port=self.config.port) 
+        log_config = uvicorn.config.LOGGING_CONFIG
+        log_config["formatters"]["access"]["fmt"] = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        log_config["formatters"]["default"]["fmt"] = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        log_config["loggers"]["uvicorn"]["propagate"] = False # Fix a bug in logging
+        uvicorn.run(self.api, host=self.config.host, port=self.config.port, log_config=log_config) 
 

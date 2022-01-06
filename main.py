@@ -1,6 +1,7 @@
 import os
 import yaml
 import argparse
+import logging
 from api import API
 from config import Config
 from doods import Doods
@@ -43,6 +44,17 @@ def main():
             config = Config(**unflatten_dict(yaml.safe_load(stream)))
         except yaml.YAMLError as exc:
             print(exc)
+
+    # Setup logging
+    level = logging.getLevelName(config.logger.level.upper())
+    logger = logging.getLogger("doods")
+    logger.propagate = False
+    logger.setLevel(level)
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    handler = logging.StreamHandler()
+    handler.setLevel(level)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
     # Initialize doods
     doods = Doods(config.doods)

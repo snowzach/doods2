@@ -39,7 +39,7 @@ class MissingDetector:
 class Doods:
     def __init__(self, config):
         self.config = config
-        self.logger = logging.getLogger('uvicorn.access')
+        self.logger = logging.getLogger('doods.doods')
 
         # Initialize the detectors
         self._detectors = {}
@@ -48,8 +48,9 @@ class Doods:
             try:
                 detector = detector_class(dconfig)
             except Exception as e:
-                self.logger.error(e)
+                self.logger.error('Could not create detector: %s' % e)
                 continue
+            self.logger.info('Registered detector type:%s name:%s', detector.config.type, detector.config.name)
             self._detectors[dconfig.name] = detector
 
     # Get the detectors configs

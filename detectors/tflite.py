@@ -2,6 +2,7 @@ from tensorflow.lite.python.interpreter import Interpreter
 import numpy as np
 import cv2
 import odrpc
+import logging
 from config import DoodsDetectorConfig
 from detectors.labels import load_labels
 
@@ -16,6 +17,7 @@ class TensorflowLite:
             'labels': [],
             'model': config.modelFile,
         })
+        self.logger = logging.getLogger("doods.tflite."+config.name)
 
         # Load the Tensorflow Lite model.
         # If using Edge TPU, use special load_delegate argument
@@ -27,9 +29,11 @@ class TensorflowLite:
             # This might fail the first time as this seems to load the drivers for the EdgeTPU the first time.
             # Doing it again will load the driver. 
             except ValueError:
-                self.interpreter = Interpreter(model_path=config.modelFile,
-                    experimental_delegates=[load_delegate('libedgetpu.so.1.0')])
-
+                try:
+                    self.interpreter = Interpreter(model_path=config.modelFile,
+                        experimental_delegates=[load_delegate('libedgetpu.so.1.0')])
+                except ValueError:
+                    raise ValueError('Could not load EdgeTPU detector')
         else:
             self.interpreter = Interpreter(model_path=config.modelFile)
         
@@ -59,20 +63,35 @@ class TensorflowLite:
         # Perform the actual detection by running the model with the image as input
         self.interpreter.set_tensor(self.input_details[0]['index'],input_data)
         self.interpreter.invoke()
-
-        boxes = self.interpreter.get_tensor(self.output_details[0]['index'])[0] # Bounding box coordinates of detected objects
-        classes = self.interpreter.get_tensor(self.output_details[1]['index'])[0] # Class index of detected objects
-        scores = self.interpreter.get_tensor(self.output_details[2]['index'])[0] # Confidence of detected objects
-
+        
         ret = odrpc.DetectResponse()
-        for i in range(len(scores)):
-            detection = odrpc.Detection()
-            (detection.top, detection.left, detection.bottom, detection.right) = boxes[i].tolist()
-            detection.confidence = scores[i] * 100.0
-            if int(classes[i]) in self.labels:
-                detection.label = self.labels[int(classes[i])]
-            else:
-                detection.label = "unknown"
-            ret.detections.append(detection)
+
+        # There is only one output in an image detector
+        if len(self.output_details) == 1:
+            scores = self.interpreter.get_tensor(self.output_details[0]['index'])[0] # Confidence of detected objects
+            for i in range(len(scores)):
+                detection = odrpc.Detection()
+                (detection.top, detection.left, detection.bottom, detection.right) = [0,0,1,1]
+                detection.confidence = scores[i] * 100.0
+                if i in self.labels:
+                    detection.label = self.labels[i]
+                else:
+                    detection.label = "unknown"
+                ret.detections.append(detection)
+        else:
+            boxes = self.interpreter.get_tensor(self.output_details[0]['index'])[0] # Bounding box coordinates of detected objects
+            classes = self.interpreter.get_tensor(self.output_details[1]['index'])[0] # Class index of detected objects
+            scores = self.interpreter.get_tensor(self.output_details[2]['index'])[0] # Confidence of detected objects
+
+            for i in range(len(scores)):
+                detection = odrpc.Detection()
+                (detection.top, detection.left, detection.bottom, detection.right) = boxes[i].tolist()
+                detection.confidence = scores[i] * 100.0
+                if int(classes[i]) in self.labels:
+                    detection.label = self.labels[int(classes[i])]
+                else:
+                    detection.label = "unknown"
+                ret.detections.append(detection)
+    
         return ret
 
