@@ -136,7 +136,10 @@ class Doods:
 
         # Draw the detections
         for detection in ret.detections:
-            cv2.putText(image, "%s:%s" % (detection.label, detection.confidence), (int(detection.left*width), int(detection.top*height)-2), font, fontScale, (0, 255, 0), thickness, lineType)
+            if detection.top*height <= 15:
+                cv2.putText(image, "%s:%s" % (detection.label, detection.confidence), (int(detection.left*width), int(detection.bottom*height)-2), font, fontScale, (0, 255, 0), thickness, lineType)
+            else:
+                cv2.putText(image, "%s:%s" % (detection.label, detection.confidence), (int(detection.left*width), int(detection.top*height)-2), font, fontScale, (0, 255, 0), thickness, lineType)
             cv2.rectangle(image, (int(detection.left*width), int(detection.top*height)), (int(detection.right*width), int(detection.bottom*height)), color=(0, 255, 0), thickness=2)
 
         ret.image = cv2.imencode(detect.image, image)[1].tostring()
