@@ -32,7 +32,7 @@
     #detect_request {
       width: 90%;
     }
-    #detectors {
+    #json {
       width: 90%;
       height: 100vh;
     }
@@ -77,7 +77,38 @@ function detectImage() {
     const image = document.getElementById('image');
     image.src = imageUrl;
     image.hidden = false;
-    document.getElementById('detectors').hidden = true;
+    document.getElementById('json').hidden = true;
+  }
+  xmlhttp.send(JSON.stringify(detect_request));
+}
+
+function detectJSON() {
+  const file = document.getElementById('file').files[0];
+  if (!file) {
+    alert("Select a file first...");
+    return
+  }
+  try {
+    var detect_request = JSON.parse(document.getElementById('detect_request').value);
+  } catch (error) {
+    alert('could not parse detect request: '+error)
+    return
+  }
+  detect_request.data = reader.result.split(',')[1];
+  
+  var xmlhttp = new XMLHttpRequest();
+  xmlhttp.open("POST", "/detect");
+  xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  xmlhttp.onload = function(e) {
+    if (this.status !== 200) {
+      this.response.text().then(function(message){alert(message)});
+      return;
+    }
+    var urlCreator = window.URL || window.webkitURL;
+    response = JSON.parse(this.response);
+    json.innerHTML = JSON.stringify(response, null, 2);
+    json.hidden = false;
+    document.getElementById('image').hidden = true;
   }
   xmlhttp.send(JSON.stringify(detect_request));
 }
@@ -105,7 +136,33 @@ function detectUrlImage() {
     const image = document.getElementById('image');
     image.src = imageUrl;
     image.hidden = false;
-    document.getElementById('detectors').hidden = true;
+    document.getElementById('json').hidden = true;
+  }
+  xmlhttp.send(JSON.stringify(detect_request));
+}
+
+function detectUrlJSON() {
+  try {
+    var detect_request = JSON.parse(document.getElementById('detect_request').value);
+  } catch (error) {
+    alert('could not parse detect request: '+error)
+    return
+  }
+  detect_request.data = document.getElementById('url').value;
+
+  var xmlhttp = new XMLHttpRequest();
+  xmlhttp.open("POST", "/detect");
+  xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  xmlhttp.onload = function(e) {
+    if (this.status !== 200) {
+      this.response.text().then(function(message){alert(message)});
+      return;
+    }
+    var urlCreator = window.URL || window.webkitURL;
+    response = JSON.parse(this.response);
+    json.innerHTML = JSON.stringify(response, null, 2);
+    json.hidden = false;
+    document.getElementById('image').hidden = true;
   }
   xmlhttp.send(JSON.stringify(detect_request));
 }
@@ -129,11 +186,11 @@ function getDetectors() {
       this.response.text().then(function(message){alert(message)});
       return;
     }
-    const detectors = document.getElementById('detectors');
+    const json = document.getElementById('json');
     // Parse the json response
     response = JSON.parse(this.response);
-    detectors.innerHTML = JSON.stringify(response, null, 2);
-    detectors.hidden = false;
+    json.innerHTML = JSON.stringify(response, null, 2);
+    json.hidden = false;
     document.getElementById('image').hidden = true;
   }
   xmlhttp.send(JSON.stringify(detect_request));
@@ -175,18 +232,20 @@ Image:
 <input id="file" type="file" onchange="loadFile()">
 &nbsp;&nbsp;
 <button type="button" onclick=detectImage()>Detect Image</button>
+<button type="button" onclick=detectJSON()>Detect JSON</button>
 <hr/>
 
 URL: 
 <input id="url" type="text" id="url" value="rtsp://user:pass@hostname:554/Streaming/Channels/101/" size="100">
 <button type="button" onclick=detectUrlImage()>Detect Image</button>
+<button type="button" onclick=detectUrlJSON()>Detect JSON</button>
 <button type="button" onclick=detectUrlStream()>Detect Stream</button>
 <br/>
 Supports http://, https://, ftp:// or rtsp:// for both an image or video stream. (Detect stream willl only work with a video stream)
 <hr/>
 
 <img id="image" hidden="true"/>
-<textarea id="detectors" hidden="true" rows=12></textarea>
+<textarea id="json" hidden="true" rows=12></textarea>
 </div>
 </body>
 </html>

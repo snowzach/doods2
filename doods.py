@@ -113,6 +113,9 @@ class Doods:
             ret.detections = Doods.filter_detections(ret.detections, detect.detect, detect.regions)
         ret.id = detect.id
 
+        # Sort the detections by confidence
+        ret.detections = sorted(ret.detections, key=lambda d: d.confidence, reverse=True)
+
         if not detect.image:
             return ret
 
