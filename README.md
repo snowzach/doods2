@@ -32,7 +32,7 @@ DOODS2 is distributed in a docker image. There are several tags you can referenc
 
 Additional more optimized tags are available:
 - amd64 - 64 bit x86_64 architecture WITH avx support. This should be faster than the noavx image on newer processors.
-- gpu - 64 bit x86_64 architecture with NVidia GPU support. See the section below on how to run this.
+- amd64-gpu - 64 bit x86_64 architecture with NVidia GPU support. See the section below on how to run this.
 
 # REST API
 The REST API has several endpoints for detecting objects in images as well as streams. Details of the payloads and endpoints are below.
@@ -190,7 +190,7 @@ or in a docker-compose file with:
 version: '3.2'
 services:
   doods:
-    image: snowzach/doods2:gpu
+    image: snowzach/doods2:amd64-gpu
     ports:
       - "8080:8080"
     devices:
@@ -200,7 +200,7 @@ services:
 You can download models for the edgeTPU here: https://coral.ai/models/object-detection
 
 # GPU Support
-NVidia GPU support is available in the `:gpu` tagged image. This requires the host machine have NVidia CUDA installed as well as
+NVidia GPU support is available in the `:amd64-gpu` tagged image. This requires the host machine have NVidia CUDA installed as well as
 Docker 19.03 and above with the `nvidia-container-toolkit`. 
 
 See this page on how to install the CUDA drives and the container toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
@@ -211,7 +211,7 @@ You can also do this with docker-compose by adding this to the DOODS container s
 version: '3.2'
 services:
   doods:
-    image: snowzach/doods2:gpu
+    image: snowzach/doods2:amd64-gpu
     ports:
       - "8080:8080"
     deploy:
@@ -227,8 +227,8 @@ services:
 There are currently 3 supported dectector formats
 - tflite - Tensorflow lite `.tflite` models
 - tensorflow - Original tensoflow frozen models (Usually end with `.pb`)
-- tensorflow2 - Tensorflow 2 object detection modes. (Points to a directory with information)
-
+- tensorflow2 - DISABLED - The libraries required were huge (2.2GB) and it was too slow to be ussful for the time being.
+  
 ## Tensorflow Lite - .tflite 
 Just download the file, make it available to dudes and put the path to the tflite model file
 in for the `modelFile` config option and the path to the text `labelsFile` in the config option. You can also set 
@@ -241,6 +241,8 @@ and provide it to DOODS along with the labels file.
 There's a good list of these here: https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf1_detection_zoo.md
 
 ## Tensorflow 2 - Model Directory
+REMOVED: The dependencies for Tensorflow 2 Object detection were massive and it was really slow so I removed it for the time being.
+
 Tensorflow 2 models are a little more complex and have a directory of files that you must pass into DOODS. You can download the file
 and extract it to it's directory. For the `modelFile` option pass the path to the directory. You will need to download the labels file
 as well and provide it's path in the `labelsFile` option.

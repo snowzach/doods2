@@ -5,5 +5,5 @@
 *.jpg
 private
 models
-example.yaml
+testing.yaml
 __pycache__

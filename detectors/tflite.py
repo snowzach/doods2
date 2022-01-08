@@ -87,7 +87,9 @@ class TensorflowLite:
                 detection = odrpc.Detection()
                 (detection.top, detection.left, detection.bottom, detection.right) = boxes[i].tolist()
                 detection.confidence = scores[i] * 100.0
-                if int(classes[i]) in self.labels:
+                if isinstance(classes[i], str):
+                    detection.label = classes[i]
+                elif int(classes[i]) in self.labels:
                     detection.label = self.labels[int(classes[i])]
                 else:
                     detection.label = "unknown"

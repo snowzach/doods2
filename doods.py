@@ -5,14 +5,16 @@ import cv2
 import odrpc
 
 from detectors.tensorflow import Tensorflow
-from detectors.tensorflow2 import Tensorflow2
+# from detectors.tensorflow2 import Tensorflow2 # Disabled for now
 from detectors.tflite import TensorflowLite
+# from detectors.pytorch import PyTorch
 
 # dict from detector type to class
 detectors = {
     "tensorflow": Tensorflow,
-    "tensorflow2": Tensorflow2,
+    # "tensorflow2": Tensorflow2, # Disabled for the time being
     "tflite": TensorflowLite,
+    # "pytorch": PyTorch,
 }
 
 font                   = cv2.FONT_HERSHEY_PLAIN
@@ -43,15 +45,15 @@ class Doods:
 
         # Initialize the detectors
         self._detectors = {}
-        for dconfig in self.config.detectors:
-            detector_class = detectors.get(dconfig.type, MissingDetector)
+        for detector_config in self.config.detectors:
+            detector_class = detectors.get(detector_config.type, MissingDetector)
             try:
-                detector = detector_class(dconfig)
+                detector = detector_class(detector_config)
             except Exception as e:
                 self.logger.error('Could not create detector: %s' % e)
                 continue
             self.logger.info('Registered detector type:%s name:%s', detector.config.type, detector.config.name)
-            self._detectors[dconfig.name] = detector
+            self._detectors[detector_config.name] = detector
 
     # Get the detectors configs
     def detectors(self):

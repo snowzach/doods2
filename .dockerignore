@@ -1,13 +1,13 @@
-Dockerfile
-Dockerfile.*
 .dockerignore
 .git
 __pycache__
 README.md
-example.yaml
+testing.yaml
 *.jpg
 *.png
 models
 private
+docker
 build-images.sh
 build-base-images.sh
+Makefile

@@ -1,0 +1,44 @@
+FROM docker.io/snowzach/tensorflow-multiarch:2.7.0-amd64-noavx as base
+
+# Install apt dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    protobuf-compiler \
+    wget \
+    curl \
+    git \
+    gpg-agent \
+    gnupg \
+    libgl1 \
+    libglib2.0-0 \
+    python3-dev \
+    unzip && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* 
+
+# Install tesorflow object detection
+RUN cd tmp && git clone https://github.com/tensorflow/models.git && \
+    cd models/research && \
+    protoc object_detection/protos/*.proto --python_out=. && \
+    cp object_detection/packages/tf2/setup.py . && \
+    python -m pip install --use-feature=2020-resolver . && \
+    rm -Rf /root/.cache && \
+    rm -Rf /tmp/models
+
+ENV TF_CPP_MIN_LOG_LEVEL 3
+
+# Install Google EdgeTPU drivers
+RUN echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | tee /etc/apt/sources.list.d/coral-edgetpu.list && \
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
+    apt-get update && \
+    apt-get install -y libedgetpu1-std && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install PyTorch dependencies
+# ADD requirements.pytorch.txt /tmp/requirements.txt
+# RUN python3 -m pip install -r /tmp/requirements.txt && rm /tmp/requirements.txt
+
+# Install python libs
+ADD requirements.txt /tmp/requirements.txt
+RUN python3 -m pip install -r /tmp/requirements.txt && rm /tmp/requirements.txt

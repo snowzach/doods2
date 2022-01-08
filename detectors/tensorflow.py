@@ -8,7 +8,7 @@ class Tensorflow:
     def __init__(self, config):
         self.config = odrpc.Detector(**{
             'name': config.name,
-            'type': 'tensorflow2',
+            'type': 'tensorflow',
             'labels': [],
             'model': config.modelFile
         })
