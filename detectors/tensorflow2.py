@@ -76,7 +76,7 @@ class Tensorflow2:
             if int(classes[i])+1 in self.category_index:
                 detection.label = self.category_index[int(classes[i])+1]
             else:
-                detection.label = "unknown"
+                detection.label = 'unknown:%s' % classes[i]
             ret.detections.append(detection)
 
         return ret

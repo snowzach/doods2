@@ -1,0 +1,32 @@
+logger:
+  level: debug
+doods:
+  detectors:
+    - name: default
+      type: tflite
+      modelFile: models/coco_ssd_mobilenet_v1_1.0_quant.tflite
+      labelFile: models/coco_labels0.txt
+    # - name: edgetpu
+    #   type: tflite
+    #   modelFile: models/mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite
+    #   labelFile: models/coco_labels0.txt
+    #   hwAccel: true
+    # - name: tensorflow
+    #   type: tensorflow
+    #   modelFile: models/faster_rcnn_inception_v2_coco_2018_01_28.pb
+    #   labelFile: models/coco_labels1.txt
+    # - name: tensorflow2
+    #   type: tensorflow2
+    #   modelFile: models/efficientdet_d0_coco17_tpu-32
+    #   labelFile: models/mscoco_label_map.pbtxt
+    # - name: efficientdet_live3x
+    #   type: tflite
+    #   modelFile: models/efficientdet_lite3x_640_ptq.tflite
+    #   labelFile: models/coco_labels2.txt
+    - name: birds
+      type: tflite
+      modelFile: models/lite-model_aiy_vision_classifier_birds_V1_3.tflite
+      labelFile: models/aiy_birds_V1_labelmap.csv
+
+
+

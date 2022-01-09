@@ -19,14 +19,17 @@ DOODS2 drops support for gRPC as I doubt very much anyone used it anyways.
 On your local machine run: `docker run -it -p 8080:8080 snowzach/doods2:latest` and open a browser to http://localhost:8080 
 Try uploading an image file or passing it an RTSP video stream. You can make changes to the specification by referencing the [Detect Request](#detect-request) payload.
 
-Two detectors are included with the base image that you can try.
+Three detectors are included with the base image that you can try.
 - default - coco_ssd_mobilenet_v1_1.0_quant.tflite - A decent and fast Tensorflow light object detector.
 - tensorflow - faster_rcnn_inception_v2_coco_2018_01_28.pb - A much slower but more accurate Tensorflow object detector.
+- yolov5s - https://github.com/ultralytics/yolov5 yolo V5 model - A fast and accurate detector
 
 ## Docker Images
 DOODS2 is distributed in a docker image. There are several tags you can reference to pick the image you like.
 - armv7l - 32 bit ARM devices with a v7 CPU like the Raspberry Pi
+  - Does not include PyTorch or Tensorflow Object Detection
 - aarch64 - 64 bit ARM devices with a v8 CPU (Raspberry Pi 64 bit, ODroid, etc)
+  - Does not include PyTorch or Tensorflow Object Detection
 - noavx - 64 bit x86_64 architecture WITHOUT avx support. This should run on just about everything.
 - latest - The `latest` tag references the above 3 tags so if you pick latest it should work on just about everything.
 
@@ -227,6 +230,7 @@ services:
 There are currently 3 supported dectector formats
 - tflite - Tensorflow lite `.tflite` models
 - tensorflow - Original tensoflow frozen models (Usually end with `.pb`)
+- pytorch - PyTorch based models like yolo
 - tensorflow2 - DISABLED - The libraries required were huge (2.2GB) and it was too slow to be ussful for the time being.
   
 ## Tensorflow Lite - .tflite 
@@ -239,6 +243,15 @@ These are protobuf files that end in .pb. You just need to download them and usu
 and provide it to DOODS along with the labels file. 
 
 There's a good list of these here: https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf1_detection_zoo.md
+
+## PyTorch - Automatically load from Torch Hub
+This allows you to pull models directly from github using the torch.hub system. https://pytorch.org/docs/stable/hub.html
+
+To configure these, for the model file specify the hub name and then the model separated by a comma. It will download and 
+load the model. 
+
+Example:
+`modelFile: ultralytics/yolov5,yolov5s`
 
 ## Tensorflow 2 - Model Directory
 REMOVED: The dependencies for Tensorflow 2 Object detection were massive and it was really slow so I removed it for the time being.

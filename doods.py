@@ -5,20 +5,28 @@ import cv2
 import odrpc
 
 from detectors.tensorflow import Tensorflow
-# from detectors.tensorflow2 import Tensorflow2 # Disabled for now
 from detectors.tflite import TensorflowLite
-# from detectors.pytorch import PyTorch
 
 # dict from detector type to class
 detectors = {
-    "tensorflow": Tensorflow,
-    # "tensorflow2": Tensorflow2, # Disabled for the time being
     "tflite": TensorflowLite,
-    # "pytorch": PyTorch,
+    "tensorflow": Tensorflow,
 }
 
+try:
+    from detectors.pytorch import PyTorch
+    detectors['pytorch'] = PyTorch
+except ModuleNotFoundError:
+    print("PyTorch not installed...")
+
+try:
+    from detectors.tensorflow2 import Tensorflow2
+    detectors['tensorflow2'] = Tensorflow2
+except ModuleNotFoundError:
+    print("Tensorflow Object Detection not installed...")
+
 font                   = cv2.FONT_HERSHEY_PLAIN
-fontScale              = 1.3
+fontScale              = 1.2
 thickness              = 1
 lineType               = 4
 
@@ -103,9 +111,8 @@ class Doods:
         for process in detect.preprocess:
             if process == 'grayscale':
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-                # image = image[np.newaxis,:, :, np.newaxis]
             else:
-                raise 'Whatever'
+                raise ValueError('unknown preprocessing request: %s' % process)
 
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
@@ -118,6 +125,7 @@ class Doods:
         # Sort the detections by confidence
         ret.detections = sorted(ret.detections, key=lambda d: d.confidence, reverse=True)
 
+        # If no image was requested, return the detection object
         if not detect.image:
             return ret
 
@@ -125,13 +133,14 @@ class Doods:
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         height, width, channels = image.shape
 
-        # Draw the global labels
+        # Draw the global detection labels
         global_labels = []
         for label in detect.detect:
             global_labels.append("%s:%s" % (label, detect.detect[label]))
         if len(global_labels) > 0:
             cv2.putText(image, ','.join(global_labels), (5, 15), font, fontScale, (255, 255, 0), thickness, lineType)
 
+        # Draw the region detection labels
         for region in detect.regions:
             region_labels = []
             for label in region.detect:
@@ -147,6 +156,7 @@ class Doods:
         ret.image = cv2.imencode(detect.image, image)[1].tostring()
         return ret
 
+    # Filter the detections to the matches
     @staticmethod
     def filter_detections(detections, detect, regions):
         ret = {}

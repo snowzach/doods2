@@ -92,7 +92,7 @@ class TensorflowLite:
                 elif int(classes[i]) in self.labels:
                     detection.label = self.labels[int(classes[i])]
                 else:
-                    detection.label = "unknown"
+                    detection.label = 'unknown:%s' % classes[i]
                 ret.detections.append(detection)
     
         return ret

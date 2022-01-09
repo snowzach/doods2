@@ -8,3 +8,6 @@ doods:
       type: tensorflow
       modelFile: models/faster_rcnn_inception_v2_coco_2018_01_28.pb
       labelFile: models/coco_labels1.txt
+    - name: pytorch
+      type: pytorch
+      modelFile: ultralytics/yolov5,yolov5s

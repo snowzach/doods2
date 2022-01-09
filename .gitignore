@@ -3,6 +3,7 @@
 *.bmp
 *.ppm
 *.jpg
+*.pt
 private
 models
 testing.yaml

@@ -4,3 +4,4 @@ pydantic==1.8.2
 uvicorn==0.16.0
 websockets==10.1
 PyYAML>=6.0
+opencv_python>=4.5.0
