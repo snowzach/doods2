@@ -253,6 +253,12 @@ load the model.
 Example:
 `modelFile: ultralytics/yolov5,yolov5s`
 
+This is the PyTorch Hub https://pytorch.org/hub/ DOODS really only supports model detection models. All models may
+not work yet as I work out the shape of the detections.
+
+If you want to cache the models that are downloaded, you can set the environment variable `TORCH_HOME` and the models
+will be stored at `$TORCH_HOME/hub`. (The default is /root/.cache/torch). 
+
 ## Tensorflow 2 - Model Directory
 REMOVED: The dependencies for Tensorflow 2 Object detection were massive and it was really slow so I removed it for the time being.
 

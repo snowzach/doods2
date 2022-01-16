@@ -7,6 +7,8 @@ import odrpc
 from detectors.tensorflow import Tensorflow
 from detectors.tflite import TensorflowLite
 
+logger = logging.getLogger('doods.doods')
+
 # dict from detector type to class
 detectors = {
     "tflite": TensorflowLite,
@@ -17,13 +19,13 @@ try:
     from detectors.pytorch import PyTorch
     detectors['pytorch'] = PyTorch
 except ModuleNotFoundError:
-    print("PyTorch not installed...")
+    logger.info('PyTorch not installed...')
 
 try:
     from detectors.tensorflow2 import Tensorflow2
     detectors['tensorflow2'] = Tensorflow2
 except ModuleNotFoundError:
-    print("Tensorflow Object Detection not installed...")
+    logger.info("Tensorflow2 Object Detection API not installed...")
 
 font                   = cv2.FONT_HERSHEY_PLAIN
 fontScale              = 1.2
@@ -44,12 +46,11 @@ detect_request_image_conversion = {
 
 class MissingDetector:
     def __init__(self, dconfig):
-        raise Exception(f'''Unknown detector type {dconfig['type']}.''')
+        raise Exception('Unknown detector type %s.' % dconfig.type)
 
 class Doods:
     def __init__(self, config):
         self.config = config
-        self.logger = logging.getLogger('doods.doods')
 
         # Initialize the detectors
         self._detectors = {}
@@ -58,9 +59,9 @@ class Doods:
             try:
                 detector = detector_class(detector_config)
             except Exception as e:
-                self.logger.error('Could not create detector: %s' % e)
+                logger.error('Could not create detector: %s' % e)
                 continue
-            self.logger.info('Registered detector type:%s name:%s', detector.config.type, detector.config.name)
+            logger.info('Registered detector type:%s name:%s', detector.config.type, detector.config.name)
             self._detectors[detector_config.name] = detector
 
     # Get the detectors configs

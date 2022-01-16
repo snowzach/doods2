@@ -2,7 +2,7 @@ logger:
   level: debug
 doods:
   detectors:
-    - name: default
+    - name: whut
       type: tflite
       modelFile: models/coco_ssd_mobilenet_v1_1.0_quant.tflite
       labelFile: models/coco_labels0.txt
@@ -23,10 +23,18 @@ doods:
     #   type: tflite
     #   modelFile: models/efficientdet_lite3x_640_ptq.tflite
     #   labelFile: models/coco_labels2.txt
-    - name: birds
-      type: tflite
-      modelFile: models/lite-model_aiy_vision_classifier_birds_V1_3.tflite
-      labelFile: models/aiy_birds_V1_labelmap.csv
+    # - name: birds
+    #   type: tflite
+    #   modelFile: models/lite-model_aiy_vision_classifier_birds_V1_3.tflite
+    #   labelFile: models/aiy_birds_V1_labelmap.csv
+
+    - name: torchbirds
+      type: pytorch
+      modelFile: nicolalandro/ntsnet-cub200,ntsnet
 
 
 
+    # - name: test
+    #   type: tflite
+    #   modelFile: models/detect-200000.tflite
+    #   labelFile: models/coco_labels0.txt

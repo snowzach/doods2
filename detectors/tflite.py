@@ -82,8 +82,9 @@ class TensorflowLite:
             boxes = self.interpreter.get_tensor(self.output_details[0]['index'])[0] # Bounding box coordinates of detected objects
             classes = self.interpreter.get_tensor(self.output_details[1]['index'])[0] # Class index of detected objects
             scores = self.interpreter.get_tensor(self.output_details[2]['index'])[0] # Confidence of detected objects
+            count = self.interpreter.get_tensor(self.output_details[3]['index'])[0] # Count of detections
 
-            for i in range(len(scores)):
+            for i in range(int(count)):
                 detection = odrpc.Detection()
                 (detection.top, detection.left, detection.bottom, detection.right) = boxes[i].tolist()
                 detection.confidence = scores[i] * 100.0

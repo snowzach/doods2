@@ -5,6 +5,7 @@ README.md
 testing.yaml
 *.jpg
 *.png
+*.pt
 models
 private
 docker
