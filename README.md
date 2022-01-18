@@ -164,6 +164,25 @@ server:
 logging:
   level: info
 doods:
+  boxes:
+    enabled: True
+    boxColor: [0, 255, 0]
+    boxThickness: 1
+    fontScale: 1.2
+    fontColor: [0, 255, 0]
+    fontThickness: 1
+  regions:
+    enabled: True
+    boxColor: [255, 0, 255]
+    boxThickness: 1
+    fontScale: 1.2
+    fontColor: [255, 0, 255]
+    fontThickness: 1
+  globals:
+    enabled: True
+    fontScale: 1.2
+    fontColor: [255, 255, 0]
+    fontThickness: 1
   detectors:
     - name: default
       type: tflite
@@ -183,6 +202,21 @@ current directory.
 
 Configuration options can also be set with environment variables using the value in all caps separated by underscore. For example
 you can set `SERVER_HOST=127.0.0.1` to only listen on localhost. Setting the doods detectors must be done with a config file.
+
+## Server
+This allows you to set the host and port the DOODS2 server listens on.
+
+## Logging
+This lets you set the logging level of the server.
+
+## DOODS - boxes
+The boxes allows you to set if, when requesting an image be returned, will the detections be drawn with bounding boxes. 
+The defaults are shown above. You can disable the boxes as well as set the box color and line thickness. The color is specified
+as a 3 value list of RGB values. The font scale, thickness and color can be set seprately.
+
+## DOODS - regions, globals
+This allows you to annotate returned images with the requested regions and global detection regions that you are scanning for in images.
+You could use this to debug and then disable them when you are done if you don't want to see them in your images.
 
 # EdgeTPU
 DOODS2 supports the EdgeTPU hardware accelerator. This requires Tensorflow lite `edgetpu.tflite` models.
