@@ -1,4 +1,23 @@
 doods:
+  boxes:
+    enabled: True
+    boxColor: [0, 255, 0]
+    boxThickness: 1
+    fontScale: 1.2
+    fontColor: [0, 255, 0]
+    fontThickness: 1
+  regions:
+    enabled: True
+    boxColor: [255, 0, 255]
+    boxThickness: 1
+    fontScale: 1.2
+    fontColor: [255, 0, 255]
+    fontThickness: 1
+  globals:
+    enabled: True
+    fontScale: 1.2
+    fontColor: [255, 255, 0]
+    fontThickness: 1
   detectors:
     - name: default
       type: tflite

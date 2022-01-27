@@ -11,7 +11,32 @@ class DoodsDetectorConfig(BaseSettings):
     class Config:
         extra = Extra.ignore
 
+class DoodsBoxesConfig(BaseSettings):
+    enabled: Optional[bool] = True
+    boxColor: Optional[List[int]] = [0, 255, 0]
+    boxThickness: Optional[int] = 1
+    fontScale: Optional[float] = 1.2
+    fontColor: Optional[List[int]] = [0, 255, 0]
+    fontThickness: Optional[int] = 2
+
+class DoodsRegionsConfig(BaseSettings):
+    enabled: Optional[bool] = True
+    boxColor: Optional[List[int]] = [0, 255, 0]
+    boxThickness: Optional[int] = 1
+    fontScale: Optional[float] = 1.2
+    fontColor: Optional[List[int]] = [0, 255, 0]
+    fontThickness: Optional[int] = 2
+
+class DoodsGlobalsConfig(BaseSettings):
+    enabled: Optional[bool] = True
+    fontScale: Optional[float] = 1.2
+    fontColor: Optional[List[int]] = [0, 255, 0]
+    fontThickness: Optional[int] = 2
+
 class DoodsConfig(BaseSettings):
+    boxes: Optional[DoodsBoxesConfig] = DoodsBoxesConfig()
+    regions: Optional[DoodsRegionsConfig] = DoodsRegionsConfig()
+    globals: Optional[DoodsGlobalsConfig] = DoodsGlobalsConfig()
     detectors: List[DoodsDetectorConfig]
     class Config:
         env_prefix = 'doods_'

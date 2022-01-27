@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
   <title>DOODS Web Interface...</title>
@@ -193,8 +194,41 @@ function getDetectors() {
     json.hidden = false;
     document.getElementById('image').hidden = true;
   }
-  xmlhttp.send(JSON.stringify(detect_request));
+  xmlhttp.send();
 }
+
+function setDetectorName(e) {
+  var detect_request = document.getElementById('detect_request');
+  try {
+    detect_request_object = JSON.parse(detect_request.value);
+  } catch (error) {
+    alert('could not parse detect request: '+error);
+    return
+  }
+  detect_request_object.detector_name = e.target.value;
+  detect_request.value = JSON.stringify(detect_request_object, null, 2);
+   console.log(detect_request);
+}
+
+// Fetch the detectors and fill the select
+let xmlhttp = new XMLHttpRequest();
+xmlhttp.open("GET", "/detectors");
+xmlhttp.onload = function(e) {
+    if (this.status !== 200) {
+      this.response.text().then(function(message){alert(message)});
+      return;
+    }
+    const detector_names = document.getElementById('detector_names');
+    response = JSON.parse(this.response);
+    for (const detector of response.detectors) {
+      var opt = document.createElement('option');
+      opt.value = detector.name;
+      opt.innerHTML = detector.name;
+      detector_names.appendChild(opt);
+    }
+    detector_names.dispatchEvent(new Event('change'));
+}
+xmlhttp.send();
 
 </script>
 <body>
@@ -210,6 +244,8 @@ function getDetectors() {
   </a>
   &nbsp;&nbsp;
   <button type="button" onclick=getDetectors()>Show Configured Detectors</button>
+  &nbsp;&nbsp;
+  Detectors: <select id="detector_names" onchange=setDetectorName(event)></select>
 </div>
 <h4></h4>
 

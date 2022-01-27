@@ -7,6 +7,8 @@ import odrpc
 from detectors.tensorflow import Tensorflow
 from detectors.tflite import TensorflowLite
 
+logger = logging.getLogger('doods.doods')
+
 # dict from detector type to class
 detectors = {
     "tflite": TensorflowLite,
@@ -17,13 +19,13 @@ try:
     from detectors.pytorch import PyTorch
     detectors['pytorch'] = PyTorch
 except ModuleNotFoundError:
-    print("PyTorch not installed...")
+    logger.info('PyTorch not installed...')
 
 try:
     from detectors.tensorflow2 import Tensorflow2
     detectors['tensorflow2'] = Tensorflow2
 except ModuleNotFoundError:
-    print("Tensorflow Object Detection not installed...")
+    logger.info("Tensorflow2 Object Detection API not installed...")
 
 font                   = cv2.FONT_HERSHEY_PLAIN
 fontScale              = 1.2
@@ -44,12 +46,11 @@ detect_request_image_conversion = {
 
 class MissingDetector:
     def __init__(self, dconfig):
-        raise Exception(f'''Unknown detector type {dconfig['type']}.''')
+        raise Exception('Unknown detector type %s.' % dconfig.type)
 
 class Doods:
     def __init__(self, config):
         self.config = config
-        self.logger = logging.getLogger('doods.doods')
 
         # Initialize the detectors
         self._detectors = {}
@@ -58,9 +59,9 @@ class Doods:
             try:
                 detector = detector_class(detector_config)
             except Exception as e:
-                self.logger.error('Could not create detector: %s' % e)
+                logger.error('Could not create detector: %s' % e)
                 continue
-            self.logger.info('Registered detector type:%s name:%s', detector.config.type, detector.config.name)
+            logger.info('Registered detector type:%s name:%s', detector.config.type, detector.config.name)
             self._detectors[detector_config.name] = detector
 
     # Get the detectors configs
@@ -134,24 +135,32 @@ class Doods:
         height, width, channels = image.shape
 
         # Draw the global detection labels
-        global_labels = []
-        for label in detect.detect:
-            global_labels.append("%s:%s" % (label, detect.detect[label]))
-        if len(global_labels) > 0:
-            cv2.putText(image, ','.join(global_labels), (5, 15), font, fontScale, (255, 255, 0), thickness, lineType)
+        if self.config.globals.enabled:
+            global_labels = []
+            for label in detect.detect:
+                global_labels.append("%s:%s" % (label, detect.detect[label]))
+            if len(global_labels) > 0:
+                cv2.putText(image, ','.join(global_labels), (5, 15), font, 
+                    self.config.globals.fontScale, tuple(self.config.globals.fontColor), self.config.globals.fontThickness, lineType)
 
         # Draw the region detection labels
-        for region in detect.regions:
-            region_labels = []
-            for label in region.detect:
-                region_labels.append("%s:%s" % (label, region.detect[label]))
-            cv2.putText(image, ','.join(region_labels), (int(region.left*width), int(region.top*height)-2), font, fontScale, (255, 0, 255), thickness, lineType)
-            cv2.rectangle(image, (int(region.left*width), int(region.top*height)), (int(region.right*width), int(region.bottom*height)), color=(255, 0, 255), thickness=2)
+        if self.config.regions.enabled:
+            for region in detect.regions:
+                region_labels = []
+                for label in region.detect:
+                    region_labels.append("%s:%s" % (label, region.detect[label]))
+                cv2.putText(image, ','.join(region_labels), (int(region.left*width), int(region.top*height)-2), 
+                    font, self.config.regions.fontScale, tuple(self.config.regions.fontColor), self.config.regions.fontThickness, lineType)
+                cv2.rectangle(image, (int(region.left*width), int(region.top*height)), (int(region.right*width), int(region.bottom*height)), 
+                    color=tuple(self.config.regions.boxColor), thickness=self.config.regions.boxThickness)
 
         # Draw the detections
-        for detection in ret.detections:
-            cv2.putText(image, "%s:%s" % (detection.label, detection.confidence), (int(detection.left*width), int(detection.bottom*height)-2), font, fontScale, (0, 255, 0), thickness, lineType)
-            cv2.rectangle(image, (int(detection.left*width), int(detection.top*height)), (int(detection.right*width), int(detection.bottom*height)), color=(0, 255, 0), thickness=2)
+        if self.config.boxes.enabled:
+            for detection in ret.detections:
+                cv2.putText(image, "%s:%s" % (detection.label, detection.confidence), (int(detection.left*width), int(detection.bottom*height)-2), 
+                    font, self.config.boxes.fontScale, tuple(self.config.boxes.fontColor), self.config.boxes.fontThickness, lineType)
+                cv2.rectangle(image, (int(detection.left*width), int(detection.top*height)), (int(detection.right*width), int(detection.bottom*height)), 
+                    color=tuple(self.config.boxes.boxColor), thickness=self.config.boxes.boxThickness)
 
         ret.image = cv2.imencode(detect.image, image)[1].tostring()
         return ret
