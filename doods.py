@@ -185,8 +185,10 @@ class Doods:
                     if d.label in r.detect:
                         if d.confidence >= r.detect[d.label]:
                             ret[i] = d
+                            ret[i].region_id = r.id # Add ID of region for which this passed filters.
                             break
                     elif '*' in r.detect and d.confidence >= r.detect['*']:
                         ret[i] = d
+                        ret[i].region_id = r.id # Add ID of region for which this passed filters.
                         break
         return list(ret.values())

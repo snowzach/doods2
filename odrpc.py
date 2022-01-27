@@ -13,6 +13,7 @@ class DetectRegion:
     right: float
     detect: Dict[str, float]
     covers: bool = False
+    id: Optional[str] = None
 
 @dataclass
 class DetectRequest:
@@ -47,6 +48,7 @@ class DetectorsResponse:
 
 @dataclass
 class Detection:
+    region_id: Optional[str] = None
     top: float = 0.0
     left: float = 0.0
     bottom: float = 0.0
@@ -54,8 +56,9 @@ class Detection:
     label: str = ""
     confidence: float = 0.0
 
-    def asdict(self):
-        return asdict(self)
+    def asdict(self, include_none=True):
+        ret = asdict(self)
+        return ret if include_none else clean_none(ret)
 
 @dataclass
 class DetectResponse:
