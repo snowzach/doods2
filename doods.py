@@ -119,12 +119,21 @@ class Doods:
 
         # Run detection
         ret = detector.detect(image)
-        if not ret.error:
-            ret.detections = Doods.filter_detections(ret.detections, detect.detect, detect.regions)
-        ret.id = detect.id
+        if ret.error:
+            return ret
 
+        # Set the id        
+        ret.id = detect.id
         # Sort the detections by confidence
         ret.detections = sorted(ret.detections, key=lambda d: d.confidence, reverse=True)
+
+        if self.config.log == 'all':
+            logger.info(ret)
+
+        ret.detections = Doods.filter_detections(ret.detections, detect.detect, detect.regions)
+
+        if self.config.log == 'detections':
+            logger.info(ret)
 
         # If no image was requested, return the detection object
         if not detect.image:

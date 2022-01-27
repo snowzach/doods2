@@ -164,6 +164,7 @@ server:
 logging:
   level: info
 doods:
+  log: detections
   boxes:
     enabled: True
     boxColor: [0, 255, 0]
@@ -208,6 +209,11 @@ This allows you to set the host and port the DOODS2 server listens on.
 
 ## Logging
 This lets you set the logging level of the server.
+
+## DOODS - log
+This lets you set the logging of detections. 
+`detections` - Log detections (default)
+`all` - Log ALL detections (before apply the filters for regions, labels, etc)
 
 ## DOODS - boxes
 The boxes allows you to set if, when requesting an image be returned, will the detections be drawn with bounding boxes. 

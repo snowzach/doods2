@@ -1,4 +1,5 @@
 doods:
+  log: all
   boxes:
     enabled: True
     boxColor: [0, 255, 0]

@@ -38,6 +38,7 @@ class DoodsConfig(BaseSettings):
     regions: Optional[DoodsRegionsConfig] = DoodsRegionsConfig()
     globals: Optional[DoodsGlobalsConfig] = DoodsGlobalsConfig()
     detectors: List[DoodsDetectorConfig]
+    log: Optional[str] = 'detections'
     class Config:
         env_prefix = 'doods_'
         extra = Extra.ignore
@@ -51,7 +52,7 @@ class LoggerConfig(BaseSettings):
 class ServerConfig(BaseSettings):
     host: Optional[str] = "0.0.0.0"
     port: Optional[int] = 8080
-    auth_key: Optional[str] = ""
+    auth_key: Optional[str] = ''
     class Config:
         env_prefix = 'server_'
         extra = Extra.ignore
