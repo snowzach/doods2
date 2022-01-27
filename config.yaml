@@ -30,3 +30,24 @@ doods:
     - name: pytorch
       type: pytorch
       modelFile: ultralytics/yolov5,yolov5s
+mqtt:
+  broker: 
+    url: "mqttBroker"
+    #port: 1883
+    #user: "username"
+    #password: "password"
+  requests:
+    - id: firstrequest
+      detector_name: default
+      preprocess: []
+      detect:
+        "*": 50
+      regions:
+      - top: 0.1
+        left: 0.1
+        bottom: 0.9
+        right: 0.9
+        detect:
+          "*": 50
+        covers: false
+      data: rtsp://user:pass@cameraip:554/cam/realmonitor?channel=1&subtype=1

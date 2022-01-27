@@ -3,6 +3,7 @@ import yaml
 import argparse
 import logging
 from api import API
+from mqtt import MQTT
 from config import Config
 from doods import Doods
 
@@ -32,7 +33,7 @@ def unflatten_dict(d):
 def main():
     parser = argparse.ArgumentParser(description='DOODS2 - Dedicated Open Object Detection Service')
     parser.add_argument('--config', '-c', help='Configuration File', default='config.yaml')
-    parser.add_argument('action', nargs='?', help='Action: api=Start REST api', default='api')
+    parser.add_argument('action', nargs='?', help='Action: api=Start REST api, mqtt=Start MQTT forwarder', default='api')
     args = parser.parse_args()
 
     # Use environment, followed by arguments, followed by default config.yaml
@@ -63,6 +64,10 @@ def main():
         # Start the server
         api = API(config.server, doods)
         api.run()
+    elif args.action == 'mqtt':
+        # Start the server
+        mqtt = MQTT(config.mqtt, doods)
+        mqtt.run()
     else:
         print('Unknown action: '+args.action)
 
