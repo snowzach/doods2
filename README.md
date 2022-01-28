@@ -86,7 +86,9 @@ Every request to DOODS involves the Detect Request JSON object that looks like t
     // The covers boolean indicates if this region must completely cover the detected object or 
     // not. If covers = true, then the detcted object must be completely inside of this region to match.
     // If covers = false than if any part of this object is inside of this region, it will match.
-    {"top": 0.1, "left": 0.1, "bottom": 0.9, "right": 0.9, "detect": {"*":50}, "covers": false}
+    // If defined, the optional id field will be included in detections that this region matched.  NOTE: 
+    // only the first region (including the global detection) to match an object will be used.
+    {"id": "someregion", "top": 0.1, "left": 0.1, "bottom": 0.9, "right": 0.9, "detect": {"*":50}, "covers": false}
     ...
   ]
 }  
