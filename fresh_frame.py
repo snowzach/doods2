@@ -44,7 +44,6 @@ class FreshestFrame(threading.Thread):
         while self.running:
             # block for fresh frame
             (rv, img) = self.capture.read()
-            assert rv
             counter += 1
 
             # publish the frame
