@@ -1,5 +1,5 @@
 doods:
-  log: all
+  log: detections
   boxes:
     enabled: True
     boxColor: [0, 255, 0]
@@ -32,8 +32,9 @@ doods:
       type: pytorch
       modelFile: ultralytics/yolov5,yolov5s
 mqtt:
+  metrics: true
   broker: 
-    url: "mqttBroker"
+    host: "mqttBroker"
     #port: 1883
     #user: "username"
     #password: "password"

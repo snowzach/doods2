@@ -7,4 +7,6 @@
 private
 models
 testing.yaml
+example.yaml
+exmqtt.yaml
 __pycache__

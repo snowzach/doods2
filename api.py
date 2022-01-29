@@ -9,6 +9,7 @@ from fastapi import status, FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from streamer import Streamer
+from prometheus_fastapi_instrumentator import Instrumentator
 
 class API():
     def __init__(self, config, doods):
@@ -17,6 +18,17 @@ class API():
         self.api = FastAPI()
         # Borrow the uvicorn logger because it's pretty.
         self.logger = logging.getLogger("doods.api")
+
+        # Enable metrics
+        if self.config.metrics:
+            self.instrumentator = Instrumentator(
+                should_ignore_untemplated=True,
+                should_instrument_requests_inprogress=True,
+                excluded_handlers=["/metrics"],
+                inprogress_name="inprogress",
+                inprogress_labels=True,
+            )
+            self.instrumentator.instrument(self.api).expose(self.api)
 
         @self.api.get("/detectors", response_model=odrpc.DetectorsResponse, response_model_exclude_none=True)
         async def detectors():

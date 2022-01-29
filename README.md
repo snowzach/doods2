@@ -163,6 +163,7 @@ that references built in default models. The configuration file looks like this 
 server:
   host: 0.0.0.0
   port: 8080
+  metrics: true
 logging:
   level: info
 doods:

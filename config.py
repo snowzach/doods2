@@ -53,12 +53,13 @@ class ServerConfig(BaseSettings):
     host: Optional[str] = "0.0.0.0"
     port: Optional[int] = 8080
     auth_key: Optional[str] = ''
+    metrics: Optional[bool] = True
     class Config:
         env_prefix = 'server_'
         extra = Extra.ignore
 
 class MqttBrokerConfig(BaseSettings):
-    url: str
+    host: Optional[str] = 'localhost'
     port: Optional[int] = 1883
     user: Optional[str] = None
     password: Optional[str] = None
@@ -69,6 +70,7 @@ class MqttBrokerConfig(BaseSettings):
 class MqttConfig(BaseSettings):
     broker: MqttBrokerConfig
     requests: List[DetectRequest]
+    metrics: Optional[bool] = True
     class Config:
         env_prefix = 'mqtt_'
         extra = Extra.ignore

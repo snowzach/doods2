@@ -1,22 +1,24 @@
-import odrpc
+import uvicorn
 import json
 import base64
 import logging
-import asyncio
 import threading
+import time
 import paho.mqtt.client as mqtt
 from streamer import Streamer
-
+from fastapi import FastAPI
+from prometheus_fastapi_instrumentator import Instrumentator
 
 class MQTT():
-    def __init__(self, config, doods):
+    def __init__(self, config, doods, metrics_server_config=None):
         self.config = config
         self.doods = doods
+        self.metrics_server_config = metrics_server_config
         self.mqtt_client = mqtt.Client()
         # Borrow the uvicorn logger because it's pretty.
-        self.logger = logging.getLogger("doods.api")
+        self.logger = logging.getLogger("doods.mqtt")
 
-    async def stream(self, detect_request: str = '{}'):
+    def stream(self, detect_request: str = '{}'):
         streamer = None
         try:
             # Run the stream detector and return the results.
@@ -29,6 +31,7 @@ class MQTT():
                     self.mqtt_client.publish(
                         f"doods/detect/{detect_request.id}{'' if detection.region_id is None else '/'+detection.region_id}", 
                         payload=json.dumps(detection.asdict(include_none=False)), qos=0, retain=False)
+                time.sleep(0.1)
 
         except Exception as e:
             self.logger.info(e)
@@ -38,9 +41,24 @@ class MQTT():
             except StopIteration:
                 pass
 
+    def metrics_server(self, config):
+        app = FastAPI()
+        self.instrumentator = Instrumentator(
+            excluded_handlers=["/metrics"],
+        )
+        self.instrumentator.instrument(app).expose(app)
+        uvicorn.run(app, host=config.host, port=config.port, log_config=None)
+
     def run(self):
         if (self.config.broker.user):
             self.mqtt_client.username_pw_set(self.config.broker.user, self.config.broker.password)
-        self.mqtt_client.connect(self.config.broker.url, self.config.broker.port, 60)
+        self.mqtt_client.connect(self.config.broker.host, self.config.broker.port, 60)
+
         for request in self.config.requests:
-            asyncio.run(self.stream(request))
+            threading.Thread(target=self.stream, args=(request,)).start()
+
+        if self.config.metrics:
+            self.logger.info("starting metrics server")
+            self.metrics_server(self.metrics_server_config)
+
+

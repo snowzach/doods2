@@ -66,7 +66,7 @@ def main():
         api.run()
     elif args.action == 'mqtt':
         # Start the server
-        mqtt = MQTT(config.mqtt, doods)
+        mqtt = MQTT(config.mqtt, doods, metrics_server_config=config.server)
         mqtt.run()
     else:
         print('Unknown action: '+args.action)
