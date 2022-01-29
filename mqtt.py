@@ -26,7 +26,9 @@ class MQTT():
                 if detect_request.image:
                     detect_response.image = base64.b64encode(detect_response.image).decode('utf-8')
                 for detection in detect_response.detections:
-                    self.mqtt_client.publish(f"doods/detect/{detect_request.id}", payload=json.dumps(detection.asdict()), qos=0, retain=False)
+                    self.mqtt_client.publish(
+                        f"doods/detect/{detect_request.id}{'' if detection.region_id is None else '/'+detection.region_id}", 
+                        payload=json.dumps(detection.asdict(include_none=False)), qos=0, retain=False)
 
         except Exception as e:
             self.logger.info(e)
