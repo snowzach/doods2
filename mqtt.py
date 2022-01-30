@@ -24,13 +24,44 @@ class MQTT():
             # Run the stream detector and return the results.
             streamer = Streamer(self.doods).start_stream(detect_request)
             for detect_response in streamer:
-                # If we requested an image, base64 encode it back to the user
-                if detect_request.image:
-                    detect_response.image = base64.b64encode(detect_response.image).decode('utf-8')
-                for detection in detect_response.detections:
+                # If separate_detections, iterate over each detection and process it separately
+                if detect_request.separate_detections:
+                    for detection in detect_response.detections:
+                        detection_dict = detection.asdict(include_none=False)
+                        # If an image was requested
+                        if detect_request.image:
+                            # For binary images, publish the image to its own topic
+                            if detect_request.binary_images:
+                                self.mqtt_client.publish(
+                                    f"doods/image/{detect_request.id}{'' if detection.region_id is None else '/'+detection.region_id}/{detection.label or 'object'}", 
+                                    payload=detect_response.image, qos=0, retain=False)
+                            # Otherwise add base64-encoded image to the detection
+                            else:
+                                detection_dict['image'] = base64.b64encode(detect_response.image).decode('utf-8')
+
+                        self.mqtt_client.publish(
+                            f"doods/detect/{detect_request.id}{'' if detection.region_id is None else '/'+detection.region_id}/{detection.label or 'object'}", 
+                            payload=json.dumps(detection_dict), qos=0, retain=False)
+                
+                # Otherwise, publish the collected detections together
+                else:
+                    # If an image was requested
+                    if detect_request.image:
+                        # If binary_images, move the image from the response and publish it to a separate topic
+                        if detect_request.binary_images:
+                            mqtt_image = detect_response.image
+                            detect_response.image = None
+                            self.mqtt_client.publish(
+                                f"doods/image/{detect_request.id}", 
+                                payload=detect_response.image, qos=0, retain=False)
+                        # Otherwise, inlcude the base64-encoded image in the response
+                        else:
+                            detect_response.image = base64.b64encode(detect_response.image).decode('utf-8')
+                    
                     self.mqtt_client.publish(
-                        f"doods/detect/{detect_request.id}{'' if detection.region_id is None else '/'+detection.region_id}", 
-                        payload=json.dumps(detection.asdict(include_none=False)), qos=0, retain=False)
+                            f"doods/detect/{detect_request.id}", 
+                            payload=json.dumps(detect_response.asdict(include_none=False)), qos=0, retain=False)
+                    
 
         except Exception as e:
             self.logger.info(e)

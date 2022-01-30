@@ -21,6 +21,8 @@ class DetectRequest:
     detector_name: Optional[str] = None
     image: Optional[str] = ""
     throttle: Optional[float] = 0.0
+    separate_detections: Optional[bool] = False
+    binary_images: Optional[bool] = False
     data: str = ""
     preprocess: List[str] = field(default_factory=list)
     detect: Dict[str, float] = field(default_factory=dict)

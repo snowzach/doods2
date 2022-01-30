@@ -66,6 +66,13 @@ Every request to DOODS involves the Detect Request JSON object that looks like t
     // grayscale = changes the image to grayscale before processing  
     "grayscale"
   ],
+  // When in MQTT mode, if separate_detections is true each detected object will be published separately into 
+  // a sub-topic based on its type (e.g doods/detect/requestid/regionid/person).  When False, the default,
+  // the whole DetectResponse object will be published to the request topic (e.g. doods/detect/requestid).
+  "separate_detections" : false,
+  // When in MQTT mode, if binary_images is true requested images will be pubished as binary data 
+  // to a separate topic (e.g. doods/image/requestid) instead of base64 encoded into the response.
+  "binary_images" : false,
   // detect is an object of label->confidence matches that will be applied to the entire image
   // The "*" for the label name indicates it can match any label. If a specific label is listed
   // then it cannot be matched by the wildcard. This example matches any label at 50% confidence
