@@ -70,6 +70,9 @@ Every request to DOODS involves the Detect Request JSON object that looks like t
   // a sub-topic based on its type (e.g doods/detect/requestid/regionid/person).  When False, the default,
   // the whole DetectResponse object will be published to the request topic (e.g. doods/detect/requestid).
   "separate_detections" : false,
+  // When in MQTT mode, if crop is true and separate_detections is true requested images will be cropped to 
+  // the decection box.  Has no effect if separate_detections is false.
+  "crop": false,
   // When in MQTT mode, if binary_images is true requested images will be pubished as binary data 
   // to a separate topic (e.g. doods/image/requestid) instead of base64 encoded into the response.
   "binary_images" : false,

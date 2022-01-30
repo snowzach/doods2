@@ -4,7 +4,9 @@ import base64
 import logging
 import threading
 import time
+import cv2
 import paho.mqtt.client as mqtt
+import numpy as np
 from streamer import Streamer
 from fastapi import FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -26,18 +28,37 @@ class MQTT():
             for detect_response in streamer:
                 # If separate_detections, iterate over each detection and process it separately
                 if detect_request.separate_detections:
+
+                    #If we're going to be cropping, do this processing only once (rather than for each detection)
+                    if detect_request.image and detect_request.crop:
+                        detect_image_bytes = np.frombuffer(detect_response.image, dtype=np.uint8)
+                        detect_image = cv2.imdecode(detect_image_bytes, cv2.IMREAD_COLOR)
+                        di_height, di_width = detect_image.shape[:2]
+
+
                     for detection in detect_response.detections:
                         detection_dict = detection.asdict(include_none=False)
+
                         # If an image was requested
                         if detect_request.image:
+                            # Crop image to detection box if requested
+                            if detect_request.crop:
+                                cropped_image = detect_image[
+                                int(detection.top*di_height):int(detection.bottom*di_height), 
+                                int(detection.left*di_width):int(detection.right*di_width)]
+                                mqtt_image = cv2.imencode(detect_request.image, cropped_image)[1].tostring()
+                            else:
+                                mqtt_image = detect_response.image
+
+
                             # For binary images, publish the image to its own topic
                             if detect_request.binary_images:
                                 self.mqtt_client.publish(
                                     f"doods/image/{detect_request.id}{'' if detection.region_id is None else '/'+detection.region_id}/{detection.label or 'object'}", 
-                                    payload=detect_response.image, qos=0, retain=False)
+                                    payload=mqtt_image, qos=0, retain=False)
                             # Otherwise add base64-encoded image to the detection
                             else:
-                                detection_dict['image'] = base64.b64encode(detect_response.image).decode('utf-8')
+                                detection_dict['image'] = base64.b64encode(mqtt_image).decode('utf-8')
 
                         self.mqtt_client.publish(
                             f"doods/detect/{detect_request.id}{'' if detection.region_id is None else '/'+detection.region_id}/{detection.label or 'object'}", 

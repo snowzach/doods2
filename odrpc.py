@@ -22,6 +22,7 @@ class DetectRequest:
     image: Optional[str] = ""
     throttle: Optional[float] = 0.0
     separate_detections: Optional[bool] = False
+    crop: Optional[bool] = False
     binary_images: Optional[bool] = False
     data: str = ""
     preprocess: List[str] = field(default_factory=list)
