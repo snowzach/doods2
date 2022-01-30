@@ -31,7 +31,6 @@ class MQTT():
                     self.mqtt_client.publish(
                         f"doods/detect/{detect_request.id}{'' if detection.region_id is None else '/'+detection.region_id}", 
                         payload=json.dumps(detection.asdict(include_none=False)), qos=0, retain=False)
-                time.sleep(0.1)
 
         except Exception as e:
             self.logger.info(e)

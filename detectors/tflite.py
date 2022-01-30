@@ -5,6 +5,7 @@ import odrpc
 import logging
 from config import DoodsDetectorConfig
 from detectors.labels import load_labels
+from threading import Lock
 
 input_mean = 127.5
 input_std = 127.5
@@ -18,6 +19,7 @@ class TensorflowLite:
             'model': config.modelFile,
         })
         self.logger = logging.getLogger("doods.tflite."+config.name)
+        self.mutex = Lock()
 
         # Load the Tensorflow Lite model.
         # If using Edge TPU, use special load_delegate argument
@@ -55,6 +57,8 @@ class TensorflowLite:
 
         image_resized = cv2.resize(image, (self.config.width, self.config.height))
         input_data = np.expand_dims(image_resized, axis=0)
+
+        self.mutex.acquire() # TFlite is not yet thread safe
 
         # Normalize pixel values if using a floating model (i.e. if model is non-quantized)
         if self.floating_model:
@@ -95,6 +99,8 @@ class TensorflowLite:
                 else:
                     detection.label = 'unknown:%s' % classes[i]
                 ret.detections.append(detection)
-    
+
+        self.mutex.release()
+
         return ret
 
