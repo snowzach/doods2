@@ -1,6 +1,6 @@
 from typing import List, Optional
 from pydantic import BaseSettings, Extra
-from odrpc import DetectRequest
+from odrpc import MqttDetectRequest
 
 class DoodsDetectorConfig(BaseSettings):
     name: str
@@ -69,7 +69,7 @@ class MqttBrokerConfig(BaseSettings):
 
 class MqttConfig(BaseSettings):
     broker: MqttBrokerConfig
-    requests: List[DetectRequest]
+    requests: List[MqttDetectRequest]
     metrics: Optional[bool] = True
     class Config:
         env_prefix = 'mqtt_'
