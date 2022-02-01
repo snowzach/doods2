@@ -61,6 +61,7 @@ class Detection:
     right: float = 0.0
     label: str = ""
     confidence: float = 0.0
+    image: Optional[str] = None
 
     def asdict(self, include_none=True):
         ret = asdict(self)

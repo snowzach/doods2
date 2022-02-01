@@ -37,8 +37,6 @@ class MQTT():
 
 
                     for detection in detect_response.detections:
-                        detection_dict = detection.asdict(include_none=False)
-
                         # If an image was requested
                         if mqtt_detect_request.image:
                             # Crop image to detection box if requested
@@ -58,11 +56,11 @@ class MQTT():
                                     payload=mqtt_image, qos=0, retain=False)
                             # Otherwise add base64-encoded image to the detection
                             else:
-                                detection_dict['image'] = base64.b64encode(mqtt_image).decode('utf-8')
+                                detection.image = base64.b64encode(mqtt_image).decode('utf-8')
 
                         self.mqtt_client.publish(
                             f"doods/detect/{mqtt_detect_request.id}{'' if detection.region_id is None else '/'+detection.region_id}/{detection.label or 'object'}", 
-                            payload=json.dumps(detection_dict), qos=0, retain=False)
+                            payload=json.dumps(detection.asdict(include_none=False)), qos=0, retain=False)
                 
                 # Otherwise, publish the collected detections together
                 else:
