@@ -22,6 +22,12 @@ except ModuleNotFoundError:
     logger.info('PyTorch not installed...')
 
 try:
+    from detectors.deepstack import DeepStack
+    detectors['deepstack'] = DeepStack
+except ModuleNotFoundError:
+    logger.info('DeepStack not installed...')
+
+try:
     from detectors.tensorflow2 import Tensorflow2
     detectors['tensorflow2'] = Tensorflow2
 except ModuleNotFoundError:
@@ -59,7 +65,7 @@ class Doods:
             try:
                 detector = detector_class(detector_config)
             except Exception as e:
-                logger.error('Could not create detector: %s' % e)
+                logger.error('Could not create detector %s/%s: %s' % (detector_config.type, detector_config.name, e))
                 continue
             logger.info('Registered detector type:%s name:%s', detector.config.type, detector.config.name)
             self._detectors[detector_config.name] = detector
