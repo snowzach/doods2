@@ -42,6 +42,9 @@ mqtt:
     - id: firstrequest
       detector_name: default
       preprocess: []
+      separate_detections: false
+      crop: false
+      binary_images: false
       detect:
         "*": 50
       regions:

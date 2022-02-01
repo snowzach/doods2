@@ -27,6 +27,12 @@ class DetectRequest:
     regions: List[DetectRegion] = field(default_factory=list)    
 
 @dataclass
+class MqttDetectRequest(DetectRequest):
+    separate_detections: Optional[bool] = False
+    crop: Optional[bool] = False
+    binary_images: Optional[bool] = False
+
+@dataclass
 class Detector:
     name: str
     type: str
@@ -55,6 +61,7 @@ class Detection:
     right: float = 0.0
     label: str = ""
     confidence: float = 0.0
+    image: Optional[str] = None
 
     def asdict(self, include_none=True):
         ret = asdict(self)

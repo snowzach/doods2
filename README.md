@@ -90,7 +90,20 @@ Every request to DOODS involves the Detect Request JSON object that looks like t
     // only the first region (including the global detection) to match an object will be used.
     {"id": "someregion", "top": 0.1, "left": 0.1, "bottom": 0.9, "right": 0.9, "detect": {"*":50}, "covers": false}
     ...
-  ]
+  ],
+
+  // NOTE: Below fields are only available in requests configured as part of the MQTT configuration
+
+  // If separate_detections is true each detected object will be published separately into 
+  // a sub-topic based on its type (e.g doods/detect/requestid/regionid/person).  When False, the default,
+  // the whole DetectResponse object will be published to the request topic (e.g. doods/detect/requestid).
+  "separate_detections" : false,
+  // If crop is true and separate_detections is true requested images will be cropped to 
+  // the decection box.  Has no effect if separate_detections is false.
+  "crop": false,
+  // If binary_images is true requested images will be pubished as binary data 
+  // to a separate topic (e.g. doods/image/requestid) instead of base64 encoded into the response.
+  "binary_images" : false,
 }  
 ```
 
