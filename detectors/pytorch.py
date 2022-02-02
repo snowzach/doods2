@@ -15,9 +15,11 @@ class PyTorch:
             'model': config.modelFile,
         })
         self.logger = logging.getLogger("doods.pytorch."+config.name)
+        self.device = torch.device("cuda:0" if config.hwAccel else "cpu")
         repo, modelName = config.modelFile.split(',',1)
         self.torch_model = torch.hub.load(repo.strip(), modelName.strip())
         self.labels = self.torch_model.names
+        self.config.labels = self.torch_model.names
 
     def detect(self, image):
 

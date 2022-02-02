@@ -287,6 +287,7 @@ There are currently 3 supported dectector formats
 - tflite - Tensorflow lite `.tflite` models
 - tensorflow - Original tensoflow frozen models (Usually end with `.pb`)
 - pytorch - PyTorch based models like yolo
+- deepstack - Deepstack models suppor
 - tensorflow2 - DISABLED - The libraries required were huge (2.2GB) and it was too slow to be ussful for the time being.
   
 ## Tensorflow Lite - .tflite 
@@ -318,6 +319,11 @@ not work yet as I work out the shape of the detections.
 
 If you want to cache the models that are downloaded, you can set the environment variable `TORCH_HOME` and the models
 will be stored at `$TORCH_HOME/hub`. (The default is /root/.cache/torch). 
+
+## Deepstack - PyTorch .pt files
+Deepstack is a pretty slick system that works pretty similar to the way that DOODS operates. There are quite a few models that
+have been custom trained. There are some samples here: https://docs.deepstack.cc/custom-models-samples/
+All you need to do is download the .pt files and list them as the model file in the config. The labels seems to be embedded.
 
 ## Tensorflow 2 - Model Directory
 REMOVED: The dependencies for Tensorflow 2 Object detection were massive and it was really slow so I removed it for the time being.
