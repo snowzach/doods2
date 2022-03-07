@@ -54,6 +54,7 @@ class ServerConfig(BaseSettings):
     port: Optional[int] = 8080
     auth_key: Optional[str] = ''
     metrics: Optional[bool] = True
+    trace: Optional[bool] = False
     class Config:
         env_prefix = 'server_'
         extra = Extra.ignore

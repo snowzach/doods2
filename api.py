@@ -11,6 +11,9 @@ from fastapi.staticfiles import StaticFiles
 from streamer import Streamer
 from prometheus_fastapi_instrumentator import Instrumentator
 
+import tracemalloc
+
+
 class API():
     def __init__(self, config, doods):
         self.config = config
@@ -29,6 +32,9 @@ class API():
                 inprogress_labels=True,
             )
             self.instrumentator.instrument(self.api).expose(self.api)
+
+        if self.config.trace:
+            tracemalloc.start()
 
         @self.api.get("/detectors", response_model=odrpc.DetectorsResponse, response_model_exclude_none=True)
         async def detectors():
@@ -139,6 +145,24 @@ class API():
                         streamer.send(True) # Stop the streamer
                 except StopIteration:
                     pass
+
+        @self.api.get("/memory")
+        async def memory():
+            if not self.config.trace:
+                return "Not Enabled"
+            current_mem, peak_mem = tracemalloc.get_traced_memory()
+            overhead = tracemalloc.get_tracemalloc_memory()
+            ret = [ "traced memory: %d KiB  peak: %d KiB  overhead: %d KiB" % (
+                int(current_mem // 1024), int(peak_mem // 1024), int(overhead // 1024)
+            ) ]
+            snapshot = tracemalloc.take_snapshot()
+            stats = snapshot.statistics('lineno')            
+            for trace in stats[:20]:
+                ret.append("%s" % (trace))
+
+            data = {}
+            data['traceback'] = ret
+            return data
 
         # Mount the UI directory - must be last
         self.api.mount("/", StaticFiles(directory="html", html=True), name="static")
