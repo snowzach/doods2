@@ -56,22 +56,26 @@ class API():
             await websocket.accept()
             detect_responses = asyncio.Queue()
             async def detect_handle(detect_request: odrpc.DetectRequest):
+                loop = asyncio.get_event_loop()
+                fut = loop.run_in_executor(None, self.doods.detect, detect_request)
                 try:
-                    detect_response = self.doods.detect(detect_request)
+                    detect_response = await asyncio.wait_for(fut, 300) # Kill it and exit after 5 minutes
                     if detect_request.image:
                         detect_response.image = base64.b64encode(detect_response.image)
                     await detect_responses.put(detect_response)
+                except asyncio.TimeoutError:
+                    self.logger.error("Detector timeout error")
                 except Exception as e:
                     self.logger.error("Exception({0}):{1!r}".format(type(e).__name__, e.args))
 
-            def detect_thread(detect_request: odrpc.DetectRequest):
+            def detect_thread(loop, detect_request: odrpc.DetectRequest):
                 try:
-                    loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
                     loop.run_until_complete(detect_handle(detect_request))
                     loop.close()
                 except Exception as e:
                     self.logger.error("Exception({0}):{1!r}".format(type(e).__name__, e.args))
+                    loop.close()
 
             async def send_detect_responses():
                 try:
@@ -87,7 +91,8 @@ class API():
                 try:
                     detect_config = await websocket.receive_json()
                     detect_request = odrpc.DetectRequest(**detect_config)
-                    threading.Thread(target=detect_thread, args=(detect_request,)).start()
+                    loop = asyncio.new_event_loop()
+                    threading.Thread(target=detect_thread, args=(loop, detect_request,)).start()
                 except TypeError:
                     await detect_responses.put(odrpc.DetectResponse(error='could not parse request body'))
                 except WebSocketDisconnect:
