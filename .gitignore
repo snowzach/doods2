@@ -5,7 +5,7 @@
 *.jpg
 *.pt
 private
-models
+/models
 testing.yaml
 example.yaml
 exmqtt.yaml

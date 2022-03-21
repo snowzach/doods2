@@ -325,6 +325,10 @@ Deepstack is a pretty slick system that works pretty similar to the way that DOO
 have been custom trained. There are some samples here: https://docs.deepstack.cc/custom-models-samples/
 All you need to do is download the .pt files and list them as the model file in the config. The labels seems to be embedded.
 
+If you receive a message that says `No module named 'models.yolo'` you are using a model that expects a very specific directory
+layout. You can fix the issue by downloading this file into your models directory adjacent to your model:
+`https://raw.githubusercontent.com/johnolafenwa/deepstack-trainer/main/models/yolo.py` This should resolve your issue.
+
 ## Tensorflow 2 - Model Directory
 REMOVED: The dependencies for Tensorflow 2 Object detection were massive and it was really slow so I removed it for the time being.
 
