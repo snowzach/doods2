@@ -44,15 +44,16 @@ class DeepStack:
         # Run detection
         results = self.torch_model(image, augment=False)[0]
         results = non_max_suppression(results, 0.4, 0.45)[0]
-
+        
         ret = odrpc.DetectResponse()
-        for *xyxy, conf, cls in reversed(results):
+        if type(results) == type(None):
+            return ret
+        for *xyxy, conf, cls in results:
             detection = odrpc.Detection()
             (detection.top, detection.left, detection.bottom, detection.right) = ((xyxy[1]-dy)/(height*ratio[0]), (xyxy[0]-dx)/(width*ratio[0]), (xyxy[3]-dy)/(height*ratio[0]), (xyxy[2]-dx)/(width*ratio[0]))
             detection.confidence = conf.item() * 100.0
             detection.label = self.labels[int(cls.item())]
             ret.detections.append(detection)
-    
         return ret
 
 def letterbox(
@@ -111,7 +112,6 @@ def non_max_suppression(
     # Settings
     multi_label = nc > 1  # multiple labels per box (adds 0.5ms/img)
 
-    t = time.time()
     output = [None] * prediction.shape[0]
     for xi, x in enumerate(prediction):  # image index, image inference
         # Apply constraints
