@@ -50,6 +50,14 @@ detect_request_image_conversion = {
     'image/png' : '.png',
 }
 
+detectors_load_precedence = [
+    "tflite",
+    "tensorflow",
+    "tensorflow2",
+    "deepstack",
+    "pytorch",
+]
+
 class MissingDetector:
     def __init__(self, dconfig):
         raise Exception('Unknown detector type %s.' % dconfig.type)
@@ -57,6 +65,8 @@ class MissingDetector:
 class Doods:
     def __init__(self, config):
         self.config = config
+
+        self.config.detectors = sorted(self.config.detectors, key=lambda d: detectors_load_precedence.index(d.type) if d.type in detectors_load_precedence else 99)
 
         # Initialize the detectors
         self._detectors = {}
