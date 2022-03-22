@@ -22,14 +22,14 @@ class DeepStack:
         self.logger = logging.getLogger("doods.deepstack."+config.name)
 
         # Include the deepstack-trainer files
-        sys.path.append('detectors/deepstack-trainer')
+        sys.path.append('detectors/yolov5')
+
         self.device = torch.device("cuda:0" if config.hwAccel else "cpu")
         self.torch_model = torch.load(config.modelFile, map_location=self.device)["model"].float().fuse().eval()        
         self.labels = self.torch_model.names
         self.config.labels = self.torch_model.names
 
     def detect(self, image):
-
         (height, width) = image.shape[:2]
         (image, ratio, (dx, dy)) = letterbox(image)
         image = np.asarray(image) # Crop image
