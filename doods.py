@@ -163,7 +163,7 @@ class Doods:
         if self.config.globals.enabled:
             global_labels = []
             for label in detect.detect:
-                global_labels.append("%s:%s" % (label, detect.detect[label]))
+                global_labels.append("%s:%d" % (label, detect.detect[label]))
             if len(global_labels) > 0:
                 cv2.putText(image, ','.join(global_labels), (5, 15), font, 
                     self.config.globals.fontScale, tuple(self.config.globals.fontColor), self.config.globals.fontThickness, lineType)
@@ -173,7 +173,7 @@ class Doods:
             for region in detect.regions:
                 region_labels = []
                 for label in region.detect:
-                    region_labels.append("%s:%s" % (label, region.detect[label]))
+                    region_labels.append("%s:%d" % (label, region.detect[label]))
                 cv2.putText(image, ','.join(region_labels), (int(region.left*width), int(region.top*height)-2), 
                     font, self.config.regions.fontScale, tuple(self.config.regions.fontColor), self.config.regions.fontThickness, lineType)
                 cv2.rectangle(image, (int(region.left*width), int(region.top*height)), (int(region.right*width), int(region.bottom*height)), 
@@ -182,7 +182,7 @@ class Doods:
         # Draw the detections
         if self.config.boxes.enabled:
             for detection in ret.detections:
-                cv2.putText(image, "%s:%s" % (detection.label, detection.confidence), (int(detection.left*width), int(detection.bottom*height)-2), 
+                cv2.putText(image, "%s:%d" % (detection.label, detection.confidence), (int(detection.left*width), int(detection.bottom*height)-2), 
                     font, self.config.boxes.fontScale, tuple(self.config.boxes.fontColor), self.config.boxes.fontThickness, lineType)
                 cv2.rectangle(image, (int(detection.left*width), int(detection.top*height)), (int(detection.right*width), int(detection.bottom*height)), 
                     color=tuple(self.config.boxes.boxColor), thickness=self.config.boxes.boxThickness)
