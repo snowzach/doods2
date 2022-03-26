@@ -9,4 +9,5 @@ private
 testing.yaml
 example.yaml
 exmqtt.yaml
+min.yaml
 __pycache__

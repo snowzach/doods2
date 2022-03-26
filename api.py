@@ -9,6 +9,7 @@ from fastapi import status, FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from streamer import Streamer
+from concurrent.futures import ThreadPoolExecutor
 from prometheus_fastapi_instrumentator import Instrumentator
 
 import tracemalloc
@@ -55,11 +56,10 @@ class API():
         async def detect_stream(websocket: WebSocket):
             await websocket.accept()
             detect_responses = asyncio.Queue()
+            executor = ThreadPoolExecutor()
             async def detect_handle(detect_request: odrpc.DetectRequest):
-                loop = asyncio.get_event_loop()
-                fut = loop.run_in_executor(None, self.doods.detect, detect_request)
                 try:
-                    detect_response = await asyncio.wait_for(fut, 300) # Kill it and exit after 5 minutes
+                    detect_response = self.doods.detect(detect_request)
                     if detect_request.image:
                         detect_response.image = base64.b64encode(detect_response.image)
                     await detect_responses.put(detect_response)
@@ -68,9 +68,10 @@ class API():
                 except Exception as e:
                     self.logger.error("Exception({0}):{1!r}".format(type(e).__name__, e.args))
 
-            def detect_thread(loop, detect_request: odrpc.DetectRequest):
+            def detect_thread(detect_request: odrpc.DetectRequest):
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
                 try:
-                    asyncio.set_event_loop(loop)
                     loop.run_until_complete(detect_handle(detect_request))
                     loop.close()
                 except Exception as e:
@@ -91,16 +92,17 @@ class API():
                 try:
                     detect_config = await websocket.receive_json()
                     detect_request = odrpc.DetectRequest(**detect_config)
-                    loop = asyncio.new_event_loop()
-                    threading.Thread(target=detect_thread, args=(loop, detect_request,)).start()
+                    executor.submit(detect_thread, detect_request)
                 except TypeError:
                     await detect_responses.put(odrpc.DetectResponse(error='could not parse request body'))
                 except WebSocketDisconnect:
                     send_detect_responses_task.cancel()
+                    executor.shutdown()
                     break
                 except Exception as e:
                     self.logger.error("Exception({0}):{1!r}".format(type(e).__name__, e.args))
                     send_detect_responses_task.cancel()
+                    executor.shutdown()
                     break
 
         @self.api.post("/image")
