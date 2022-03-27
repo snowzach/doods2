@@ -8,6 +8,7 @@ class DoodsDetectorConfig(BaseSettings):
     modelFile: str
     labelFile: Optional[str]
     hwAccel: Optional[bool] = False
+    numThreads: Optional[int] = 2
     class Config:
         extra = Extra.ignore
 

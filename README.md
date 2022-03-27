@@ -206,6 +206,7 @@ doods:
       modelFile: models/coco_ssd_mobilenet_v1_1.0_quant.tflite
       labelFile: models/coco_labels0.txt
       hwAccel: false
+      numThreads: 4
     - name: tensorflow
       type: tensorflow
       modelFile: models/faster_rcnn_inception_v2_coco_2018_01_28.pb
@@ -295,9 +296,8 @@ Just download the file, make it available to dudes and put the path to the tflit
 in for the `modelFile` config option and the path to the text `labelsFile` in the config option. You can also set 
 `hwAccel` if it's an `edgetpu.tflite` and of course you actually have a EdgeTPU connected.
 
-Tensorflow Lite isn't good at multi-threading. It can really only run one detection at a time. If you want to run multiple 
-tensorflow lite detections at the same time, create more than one detctor with the same model with different names and send
-each detection to a different name. 
+Tensorflow Lite is the one type you can use the `numThreads` argument with and it will create a pool of tflite models for
+which to run detections. You can create as many as you want.
 
 ## Tensorflow 1 - .pb
 These are protobuf files that end in .pb. You just need to download them and usually un-tgz the archive and get the `.pb` file
