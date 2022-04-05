@@ -4,6 +4,7 @@
 *.ppm
 *.jpg
 *.pt
+*.swp
 private
 /models
 testing.yaml
