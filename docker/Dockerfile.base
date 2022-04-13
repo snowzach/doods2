@@ -11,19 +11,21 @@ ARG BAZEL_OPTS="--config=avx_linux"
 # TODO: Avoid building unused tensorflow features.
 RUN apt update && \
 	apt install -y --no-install-recommends \
-		bazel-bootstrap git build-essential openjdk-11-jdk zip unzip && \
-	cd / && \
-	git clone --branch 4.2.1 --depth 1 https://github.com/bazelbuild/bazel && \
+		wget build-essential openjdk-11-jdk zip unzip && \
+	mkdir /bazel && \
 	cd /bazel && \
-	bazel build "//src:bazel" --compilation_mode=opt && \
-	apt purge -y bazel-bootstrap build-essential openjdk-11-jdk zip unzip --autoremove && \
-	mv /bazel/bazel-bin/src/bazel /usr/bin/ && \
+	wget https://github.com/bazelbuild/bazel/releases/download/4.2.1/bazel-4.2.1-dist.zip \
+		-O bazel.zip && \
+	unzip bazel.zip && \
+	EXTRA_BAZEL_ARGS="--tool_java_runtime_version=local_jdk" bash ./compile.sh && \
+	apt purge -y wget build-essential zip unzip --autoremove && \
+	mv /bazel/output/bazel /usr/bin/ && \
 	rm -r /bazel && \
 	\
 	cd / && \
-	git clone --branch r2.8 --depth 1 https://github.com/tensorflow/tensorflow.git && \
-	apt install -y --no-install-recommends python3-dev gcc g++ && \
+	apt install -y --no-install-recommends git python3-dev gcc g++ && \
 	pip install -U pip numpy wheel packaging && \
+	git clone --branch r2.8 --depth 1 https://github.com/tensorflow/tensorflow.git && \
 	cd /tensorflow && \
 	bazel build --jobs=$JOBS --verbose_failures --config=release_base --config=nogcp \
 		--config=nonccl $BAZEL_OPTS tensorflow/tools/pip_package:build_pip_package && \
@@ -31,7 +33,7 @@ RUN apt update && \
 	./bazel-bin/tensorflow/tools/pip_package/build_pip_package /tensorflow/out --cpu && \
 	pip install /tensorflow/out/* --no-deps && \
 	pip uninstall -y wheel packaging && \
-	apt purge -y git python3-dev gcc g++ --autoremove && \
+	apt purge -y git openjdk-11-jdk python3-dev gcc g++ --autoremove && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm /usr/bin/bazel && \
 	rm -r /root/.cache && \
