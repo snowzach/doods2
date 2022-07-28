@@ -73,6 +73,7 @@ class DetectResponse:
     image: Optional[str] = None
     detections: List[Detection] = field(default_factory=list)
     error: Optional[str] = None
+    duration: Optional[int] = None
 
     def asdict(self, include_none=True):
         ret = asdict(self)

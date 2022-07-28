@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import cv2
 import odrpc
+import time
 
 from detectors.tensorflow import Tensorflow
 from detectors.tflite import TensorflowLite
@@ -134,9 +135,12 @@ class Doods:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         # Run detection
+        start = time.perf_counter()
         ret = detector.detect(image)
         if ret.error:
             return ret
+        # Detection duration in milliseconds.
+        ret.duration = (time.perf_counter() - start) * 1000
 
         # Set the id        
         ret.id = detect.id
