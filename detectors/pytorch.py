@@ -18,8 +18,11 @@ class PyTorch:
         self.device = torch.device("cuda:0" if config.hwAccel else "cpu")
         repo, modelName = config.modelFile.split(',',1)
         self.torch_model = torch.hub.load(repo.strip(), modelName.strip())
-        self.labels = self.torch_model.names
-        self.config.labels = self.torch_model.names
+        if isinstance(self.torch_model.names, dict):
+            self.labels = list(self.torch_model.names.values())
+        else:
+            self.labels = self.torch_model.names
+        self.config.labels = self.labels
 
     def detect(self, image):
 
