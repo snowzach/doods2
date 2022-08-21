@@ -154,7 +154,7 @@ This API call takes a JSON [Detect Request](#detect-request) in the POST body an
 image propert of the Detect Request with all of the bounding boxes drawn with labels and confidence. This is equivalent
 of calling the POST /detect endpoint but only returning the image rather than all of the detection information as well.
 
-### GET /stream?detection_request=<URL Encoded Detect Request JSON>
+### GET /stream?detect_request=<URL Encoded Detect Request JSON>
 This endpoint takes a URL Encoded JSON [Detect Request](#detect-request) document as the `detect_request` query parameter. It expected the `data`
 value of the Detect Request to be a streaming video URL (like `rtsp://...`) It will connect to the stream and continuously
 process detections as fast as it can (or as dictated by the `throttle` parameter) and returns an MJPEG video stream
