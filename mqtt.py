@@ -90,6 +90,9 @@ class MQTT():
             except StopIteration:
                 pass
 
+    def on_message(self, client, userdata, msg):
+        print(msg)
+
     def metrics_server(self, config):
         app = FastAPI()
         self.instrumentator = Instrumentator(
@@ -105,6 +108,11 @@ class MQTT():
 
         for request in self.config.requests:
             threading.Thread(target=self.stream, args=(request,)).start()
+
+        if (self.config.api):
+            self.mqtt_client.subscribe(self.config.api.request_topic)
+            self.mqtt_client.on_message = self.on_message
+            self.logger.info(f'listening on mqtt topic %s for requests', self.config.api.request_topic)
 
         if self.config.metrics:
             self.logger.info("starting metrics server")

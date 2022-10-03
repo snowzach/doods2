@@ -3,11 +3,11 @@ default:
 
 buildx-setup:
 	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-	docker buildx use default
-	docker buildx rm nubuilder
-	docker buildx create --name nubuilder
-	docker buildx use nubuilder
-	docker buildx ls
+	# docker buildx use default
+	# docker buildx rm nubuilder
+	# docker buildx create --name nubuilder
+	# docker buildx use nubuilder
+	# docker buildx ls
 
 docker-base-armv7l:
 	docker buildx build --pull --push --platform linux/arm/v7 -f docker/Dockerfile.base.armv7l --tag docker.io/snowzach/doods2:base-armv7l .

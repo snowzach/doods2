@@ -26,8 +26,11 @@ class DeepStack:
 
         self.device = torch.device("cuda:0" if config.hwAccel else "cpu")
         self.torch_model = torch.load(config.modelFile, map_location=self.device)["model"].float().fuse().eval()        
-        self.labels = self.torch_model.names
-        self.config.labels = self.torch_model.names
+        if isinstance(self.torch_model.names, dict):
+            self.labels = list(self.torch_model.names.values())
+        else:
+            self.labels = self.torch_model.names
+        self.config.labels = self.labels
 
     def detect(self, image):
         (height, width) = image.shape[:2]

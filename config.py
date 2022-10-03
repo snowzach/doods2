@@ -69,9 +69,14 @@ class MqttBrokerConfig(BaseSettings):
         env_prefix = 'mqttbroker_'
         extra = Extra.ignore
 
+class MqttApiConfig(BaseSettings):
+    request_topic: Optional[str] = 'doods2/request_topic'
+    response_topic: Optional[str] = 'doods2/response_topic'
+
 class MqttConfig(BaseSettings):
     broker: MqttBrokerConfig
-    requests: List[MqttDetectRequest]
+    api: Optional[MqttApiConfig]
+    requests: Optional[List[MqttDetectRequest]] = []
     metrics: Optional[bool] = True
     class Config:
         env_prefix = 'mqtt_'
