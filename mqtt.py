@@ -104,7 +104,7 @@ class MQTT():
     def run(self):
         if (self.config.broker.user):
             self.mqtt_client.username_pw_set(self.config.broker.user, self.config.broker.password)
-        self.mqtt_client.connect(self.config.broker.host, self.config.broker.port, 60)
+        self.mqtt_client.connect(self.config.broker.host, self.config.broker.port, 0)
 
         for request in self.config.requests:
             threading.Thread(target=self.stream, args=(request,)).start()
