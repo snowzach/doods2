@@ -1,13 +1,10 @@
 
+VERSION=$(shell cat .current_version)
+
 default:
 
 buildx-setup:
 	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-	# docker buildx use default
-	# docker buildx rm nubuilder
-	# docker buildx create --name nubuilder
-	# docker buildx use nubuilder
-	# docker buildx ls
 
 docker-base-armv7l:
 	docker buildx build --pull --push --platform linux/arm/v7 -f docker/Dockerfile.base.armv7l --tag docker.io/snowzach/doods2:base-armv7l .
@@ -45,6 +42,20 @@ docker: docker-armv7l docker-aarch64 docker-amd64 docker-amd64-noavx docker-amd6
 	docker manifest push --purge docker.io/snowzach/doods2:latest
 	docker manifest create docker.io/snowzach/doods2:latest docker.io/snowzach/doods2:armv7l docker.io/snowzach/doods2:aarch64 docker.io/snowzach/doods2:amd64-noavx
 	docker manifest push docker.io/snowzach/doods2:latest
+
+docker-version:
+	docker manifest push --purge docker.io/snowzach/doods2:${VERSION} || true
+	docker manifest create docker.io/snowzach/doods2:${VERSION} docker.io/snowzach/doods2:armv7l docker.io/snowzach/doods2:aarch64 docker.io/snowzach/doods2:amd64-noavx
+	docker manifest create docker.io/snowzach/doods2:${VERSION}-armv7l docker.io/snowzach/doods2:armv7l
+	docker manifest create docker.io/snowzach/doods2:${VERSION}-aarch64 docker.io/snowzach/doods2:aarch64
+	docker manifest create docker.io/snowzach/doods2:${VERSION}-amd64-noavx docker.io/snowzach/doods2:amd64-noavx
+	docker manifest create docker.io/snowzach/doods2:${VERSION}-amd64 docker.io/snowzach/doods2:amd64
+	docker manifest create docker.io/snowzach/doods2:${VERSION}-amd64-gpu docker.io/snowzach/doods2:amd64-gpu
+	docker manifest push docker.io/snowzach/doods2:${VERSION}-armv7l
+	docker manifest push docker.io/snowzach/doods2:${VERSION}-aarch64
+	docker manifest push docker.io/snowzach/doods2:${VERSION}-amd64-noavx
+	docker manifest push docker.io/snowzach/doods2:${VERSION}-amd64
+	docker manifest push docker.io/snowzach/doods2:${VERSION}-amd64-gpu
 
 docker-config:
 	# Build the base config image

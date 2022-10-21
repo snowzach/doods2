@@ -1,5 +1,8 @@
 FROM docker.io/tensorflow/tensorflow:2.7.0-gpu as base
 
+# Remove nvidia repos as they are no longer signed with the included key and we don't need to update them anyhow.
+RUN rm /etc/apt/sources.list.d/nvidia-ml.list /etc/apt/sources.list.d/cuda.list
+
 # Install dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
