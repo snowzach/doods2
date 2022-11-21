@@ -7,6 +7,7 @@ RUN rm /etc/apt/sources.list.d/nvidia-ml.list /etc/apt/sources.list.d/cuda.list
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     curl \
+    git \
     gnupg \
     libjpeg8 \
     libpng16-16 \

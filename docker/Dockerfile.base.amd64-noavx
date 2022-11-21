@@ -4,6 +4,7 @@ FROM docker.io/snowzach/tensorflow-multiarch:2.7.0-amd64-noavx as base
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     curl \
+    git \
     gnupg \
     libjpeg8 \
     libpng16-16 \
