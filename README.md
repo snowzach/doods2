@@ -241,6 +241,17 @@ as a 3 value list of RGB values. The font scale, thickness and color can be set 
 This allows you to annotate returned images with the requested regions and global detection regions that you are scanning for in images.
 You could use this to debug and then disable them when you are done if you don't want to see them in your images.
 
+# CLI Example
+Here's an example of how to call DOODS from the command line with a 1-Liner using curl with image data: 
+```
+echo "{\"detector_name\":\"default\", \"detect\":{\"*\":60}, \"data\":\"`cat grace_hopper.png|base64 -w0`\"}" > /tmp/postdata.json && curl -d@/tmp/postdata.json -H "Content-Type: application/json" -X POST http://localhost:8080/detect
+```
+
+Another example 1-Liner specifying a region:
+```
+echo "{\"detector_name\":\"default\", \"regions\":[{\"top\":0,\"left\":0,\"bottom\":1,\"right\":1,\"detect\":{\"person\":40}}], \"data\":\"`cat grace_hopper.png|base64 -w0`\"}" > /tmp/postdata.json && curl -d@/tmp/postdata.json -H "Content-Type: application/json" -X POST http://localhost:8087/detect
+```
+
 # EdgeTPU
 DOODS2 supports the EdgeTPU hardware accelerator. This requires Tensorflow lite `edgetpu.tflite` models.
 In the config you need to set the `hwAccel` boolean to true for the model and it will load the edgeTPU driver and model.
