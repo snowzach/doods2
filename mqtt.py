@@ -81,9 +81,7 @@ class MQTT():
                             f"doods/detect/{mqtt_detect_request.id}", 
                             payload=json.dumps(detect_response.asdict(include_none=False)), qos=0, retain=False)
                     
-
-        except Exception as e:
-            self.logger.info(e)
+        finally:
             try:
                 if streamer:
                     streamer.send(True)  # Stop the streamer
