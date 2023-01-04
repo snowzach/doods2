@@ -1,5 +1,4 @@
 doods:
-  log: detections
   boxes:
     enabled: True
     boxColor: [0, 255, 0]
@@ -31,31 +30,3 @@ doods:
     - name: pytorch
       type: pytorch
       modelFile: ultralytics/yolov5,yolov5s
-mqtt:
-  metrics: true
-  broker:
-    host: "localhass.prozach.org"
-    #port: 1883
-    user: "debug"
-    password: "debug"
-  api:
-    request_topic: "doods2/request"
-    response_topic: "doods2/response"
-  requests:
-    - id: firstrequest
-      detector_name: default
-      preprocess: []
-      separate_detections: false
-      crop: false
-      binary_images: false
-      detect:
-        "*": 50
-      regions:
-      - top: 0.1
-        left: 0.1
-        bottom: 0.9
-        right: 0.9
-        detect:
-          "*": 50
-        covers: false
-      data: rtsp://blueiris:Blueiris1@192.168.6.95:554/Streaming/Channels/101/
