@@ -7,6 +7,7 @@ class DoodsDetectorConfig(BaseSettings):
     type: str
     modelFile: str
     labelFile: Optional[str]
+    labelsStartFromZero: Optional[bool] = False
     hwAccel: Optional[bool] = False
     numThreads: Optional[int] = 2
     class Config:

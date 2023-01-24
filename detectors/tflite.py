@@ -42,7 +42,7 @@ class TensorflowLite:
         self.floating_model = (self.input_details[0]['dtype'] == np.float32)
 
         # Load labels
-        self.labels = load_labels(config.labelFile)
+        self.labels = load_labels(config.labelFile, config.labelsStartFromZero)
         for i in self.labels:
             self.config.labels.append(self.labels[i])
 

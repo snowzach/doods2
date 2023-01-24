@@ -2,10 +2,11 @@ import tensorflow.compat.v1 as tf
 import numpy as np
 import odrpc
 import logging
+from config import DoodsDetectorConfig
 from detectors.labels import load_labels
 
 class Tensorflow:
-    def __init__(self, config):
+    def __init__(self, config: DoodsDetectorConfig):
         self.config = odrpc.Detector(**{
             'name': config.name,
             'type': 'tensorflow',
@@ -23,7 +24,7 @@ class Tensorflow:
         self.num_d = self.detection_graph.get_tensor_by_name('num_detections:0')
         self.sess = tf.Session(graph=self.detection_graph)
 
-        self.labels = load_labels(config.labelFile)
+        self.labels = load_labels(config.labelFile, config.labelsStartFromZero)
         for i in self.labels:
             self.config.labels.append(self.labels[i])
 

@@ -205,6 +205,7 @@ doods:
       type: tflite
       modelFile: models/coco_ssd_mobilenet_v1_1.0_quant.tflite
       labelFile: models/coco_labels0.txt
+      labelsStartFromZero: true # The labels file starts from index zero instead of 1 like most labels
       hwAccel: false
       numThreads: 4
     - name: tensorflow
@@ -301,6 +302,9 @@ There are currently 3 supported dectector formats
 - pytorch - PyTorch based models like yolo
 - deepstack - Deepstack models suppor
 - tensorflow2 - DISABLED - The libraries required were huge (2.2GB) and it was too slow to be ussful for the time being.
+
+## Other Options
+- labelsStartFromZero: true - The labels file starts from index zero instead of 1 like most labels.
   
 ## Tensorflow Lite - .tflite 
 Just download the file, make it available to dudes and put the path to the tflite model file
@@ -350,3 +354,4 @@ as well and provide it's path in the `labelsFile` option.
 This is a model zoo for Tensorflow 2 models: https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md
 
 I think they are better but they generally are much slower and probably require a GPU to work in a reasonable amount of time.
+

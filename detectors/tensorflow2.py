@@ -4,11 +4,12 @@ import tensorflow as tf
 from object_detection.utils import label_map_util
 from object_detection.utils import config_util
 from object_detection.builders import model_builder
+from config import DoodsDetectorConfig
 import numpy as np
 import odrpc
 
 class Tensorflow2:
-    def __init__(self, config):
+    def __init__(self, config: DoodsDetectorConfig):
         self.config = odrpc.Detector(**{
             'name': config.name,
             'type': 'tensorflow2',
