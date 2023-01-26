@@ -332,8 +332,16 @@ Example:
 This is the PyTorch Hub https://pytorch.org/hub/ DOODS really only supports model detection models. All models may
 not work yet as I work out the shape of the detections.
 
-If you want to cache the models that are downloaded, you can set the environment variable `TORCH_HOME` and the models
-will be stored at `$TORCH_HOME/hub`. (The default is /root/.cache/torch). 
+If you want to cache the models that are downloaded, you can set the environment variables as below:
+
+- `$TORCH_HOME/hub`, if environment variable `TORCH_HOME` is set. (this will cache the models)
+- `$XDG_CACHE_HOME/torch/hub`, if environment variable `XDG_CACHE_HOME` is set. (this will cache the models and python modules)
+- The default is `/root/.cache/torch`
+
+You can pass the enviroment variables using docker `-e TORCH_HOME=/home/user/doods -v /home/user/doods:/data`,
+this will cache the models to `/data` folder inside the docker container and to `/home/user/doods` in the host machine
+
+More info [here](https://pytorch.org/docs/stable/hub.html#where-are-my-downloaded-models-saved)
 
 ## Deepstack - PyTorch .pt files
 Deepstack is a pretty slick system that works pretty similar to the way that DOODS operates. There are quite a few models that
