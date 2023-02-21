@@ -106,10 +106,29 @@ class TensorflowLite:
                     detection.label = "unknown"
                 ret.detections.append(detection)
         else:
-            boxes = interpreter.get_tensor(self.output_details[0]['index'])[0] # Bounding box coordinates of detected objects
-            classes = interpreter.get_tensor(self.output_details[1]['index'])[0] # Class index of detected objects
-            scores = interpreter.get_tensor(self.output_details[2]['index'])[0] # Confidence of detected objects
-            count = interpreter.get_tensor(self.output_details[3]['index'])[0] # Count of detections
+            a = interpreter.get_tensor(self.output_details[0]['index'])[0] # Bounding box coordinates of detected objects
+            b = interpreter.get_tensor(self.output_details[1]['index'])[0] # Class index of detected objects
+            c = interpreter.get_tensor(self.output_details[2]['index'])[0] # Confidence of detected objects
+            d = interpreter.get_tensor(self.output_details[3]['index'])[0] # Count of detections
+
+            # boxes = interpreter.get_tensor(self.output_details[0]['index'])[0] # Bounding box coordinates of detected objects
+            # classes = interpreter.get_tensor(self.output_details[1]['index'])[0] # Class index of detected objects
+            # scores = interpreter.get_tensor(self.output_details[2]['index'])[0] # Confidence of detected objects
+            # count = interpreter.get_tensor(self.output_details[3]['index'])[0] # Count of detections
+
+            # Figure out which one is the count
+            if d.size == 1:
+                boxes = a
+                classes = b
+                scores = c
+                count = d
+            elif c.size == 1:
+                scores = a
+                boxes = b
+                count = c
+                classes = d
+            else:
+                raise ValueError('unable to determine output format')
 
             for i in range(int(count)):
                 detection = odrpc.Detection()
