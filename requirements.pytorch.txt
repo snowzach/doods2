@@ -6,3 +6,4 @@ image>=1.5.0
 tqdm>=4.64.0
 ipython>=8.5.0
 psutil>=5.9.3
+ultralytics>=8.0.105
