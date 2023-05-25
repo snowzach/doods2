@@ -27,6 +27,7 @@ RUN echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" |
     rm -rf /var/lib/apt/lists/*
 
 # Install PyTorch dependencies
+RUN python3 -m pip install torch torchvision --no-cache-dir --index-url https://download.pytorch.org/whl/cpu
 ADD requirements.pytorch.txt /tmp/requirements.txt
 RUN python3 -m pip install -r /tmp/requirements.txt && rm /tmp/requirements.txt
 
