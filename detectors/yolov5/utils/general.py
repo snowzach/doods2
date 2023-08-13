@@ -1,4 +1,4 @@
-# YOLOv5 🚀 by Ultralytics, GPL-3.0 license
+# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
 """
 General utils
 """
@@ -7,13 +7,14 @@ import contextlib
 import glob
 import inspect
 import logging
+import logging.config
 import math
 import os
 import platform
 import random
 import re
-import shutil
 import signal
+import subprocess
 import sys
 import time
 import urllib
@@ -23,8 +24,9 @@ from itertools import repeat
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from subprocess import check_output
+from tarfile import is_tarfile
 from typing import Optional
-from zipfile import ZipFile
+from zipfile import ZipFile, is_zipfile
 
 import cv2
 import numpy as np
@@ -34,8 +36,19 @@ import torch
 import torchvision
 import yaml
 
+# Import 'ultralytics' package or install if if missing
+try:
+    import ultralytics
+
+    assert hasattr(ultralytics, '__version__')  # verify package is not directory
+except (ImportError, AssertionError):
+    os.system('pip install -U ultralytics')
+    import ultralytics
+
+from ultralytics.utils.checks import check_requirements
+
 from utils import TryExcept, emojis
-from utils.downloads import gsutil_getsize
+from utils.downloads import curl_download, gsutil_getsize
 from utils.metrics import box_iou, fitness
 
 FILE = Path(__file__).resolve()
@@ -47,6 +60,7 @@ NUM_THREADS = min(8, max(1, os.cpu_count() - 1))  # number of YOLOv5 multiproces
 DATASETS_DIR = Path(os.getenv('YOLOv5_DATASETS_DIR', ROOT.parent / 'datasets'))  # global datasets directory
 AUTOINSTALL = str(os.getenv('YOLOv5_AUTOINSTALL', True)).lower() == 'true'  # global auto-install mode
 VERBOSE = str(os.getenv('YOLOv5_VERBOSE', True)).lower() == 'true'  # global verbose mode
+TQDM_BAR_FORMAT = '{l_bar}{bar:10}{r_bar}'  # tqdm bar format
 FONT = 'Arial.ttf'  # https://ultralytics.com/assets/Arial.ttf
 
 torch.set_printoptions(linewidth=320, precision=5, profile='long')
@@ -55,6 +69,7 @@ pd.options.display.max_columns = 10
 cv2.setNumThreads(0)  # prevent OpenCV from multithreading (incompatible with PyTorch DataLoader)
 os.environ['NUMEXPR_MAX_THREADS'] = str(NUM_THREADS)  # NumExpr max threads
 os.environ['OMP_NUM_THREADS'] = '1' if platform.system() == 'darwin' else str(NUM_THREADS)  # OpenMP (PyTorch and SciPy)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress verbose TF compiler warnings in Colab
 
 
 def is_ascii(s=''):
@@ -70,7 +85,21 @@ def is_chinese(s='人工智能'):
 
 def is_colab():
     # Is environment a Google Colab instance?
-    return 'COLAB_GPU' in os.environ
+    return 'google.colab' in sys.modules
+
+
+def is_jupyter():
+    """
+    Check if the current script is running inside a Jupyter Notebook.
+    Verified on Colab, Jupyterlab, Kaggle, Paperspace.
+
+    Returns:
+        bool: True if running inside a Jupyter Notebook, False otherwise.
+    """
+    with contextlib.suppress(Exception):
+        from IPython import get_ipython
+        return get_ipython() is not None
+    return False
 
 
 def is_kaggle():
@@ -80,11 +109,11 @@ def is_kaggle():
 
 def is_docker() -> bool:
     """Check if the process runs inside a docker container."""
-    if Path("/.dockerenv").exists():
+    if Path('/.dockerenv').exists():
         return True
     try:  # check if docker is in control groups
-        with open("/proc/self/cgroup") as file:
-            return any("docker" in line for line in file)
+        with open('/proc/self/cgroup') as file:
+            return any('docker' in line for line in file)
     except OSError:
         return False
 
@@ -103,23 +132,33 @@ def is_writeable(dir, test=False):
         return False
 
 
-def set_logging(name=None, verbose=VERBOSE):
-    # Sets level and returns logger
-    if is_kaggle() or is_colab():
-        for h in logging.root.handlers:
-            logging.root.removeHandler(h)  # remove all handlers associated with the root logger object
+LOGGING_NAME = 'yolov5'
+
+
+def set_logging(name=LOGGING_NAME, verbose=True):
+    # sets up logging for the given name
     rank = int(os.getenv('RANK', -1))  # rank in world for Multi-GPU trainings
     level = logging.INFO if verbose and rank in {-1, 0} else logging.ERROR
-    log = logging.getLogger(name)
-    log.setLevel(level)
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter("%(message)s"))
-    handler.setLevel(level)
-    log.addHandler(handler)
+    logging.config.dictConfig({
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            name: {
+                'format': '%(message)s'}},
+        'handlers': {
+            name: {
+                'class': 'logging.StreamHandler',
+                'formatter': name,
+                'level': level, }},
+        'loggers': {
+            name: {
+                'level': level,
+                'handlers': [name],
+                'propagate': False, }}})
 
 
-set_logging()  # run before defining LOGGER
-LOGGER = logging.getLogger("yolov5")  # define globally (used in train.py, val.py, detect.py, etc.)
+set_logging(LOGGING_NAME)  # run before defining LOGGER
+LOGGER = logging.getLogger(LOGGING_NAME)  # define globally (used in train.py, val.py, detect.py, etc.)
 if platform.system() == 'Windows':
     for fn in LOGGER.info, LOGGER.warning:
         setattr(LOGGER, fn.__name__, lambda x: fn(emojis(x)))  # emoji safe logging
@@ -198,7 +237,7 @@ class WorkingDirectory(contextlib.ContextDecorator):
 
 def methods(instance):
     # Get class/instance methods
-    return [f for f in dir(instance) if callable(getattr(instance, f)) and not f.startswith("__")]
+    return [f for f in dir(instance) if callable(getattr(instance, f)) and not f.startswith('__')]
 
 
 def print_args(args: Optional[dict] = None, show_file=True, show_func=False):
@@ -275,11 +314,16 @@ def file_size(path):
 def check_online():
     # Check internet connectivity
     import socket
-    try:
-        socket.create_connection(("1.1.1.1", 443), 5)  # check host accessibility
-        return True
-    except OSError:
-        return False
+
+    def run_once():
+        # Check once
+        try:
+            socket.create_connection(('1.1.1.1', 443), 5)  # check host accessibility
+            return True
+        except OSError:
+            return False
+
+    return run_once() or run_once()  # check twice to increase robustness to intermittent connectivity issues
 
 
 def git_describe(path=ROOT):  # path must be a directory
@@ -313,13 +357,31 @@ def check_git_status(repo='ultralytics/yolov5', branch='master'):
     n = int(check_output(f'git rev-list {local_branch}..{remote}/{branch} --count', shell=True))  # commits behind
     if n > 0:
         pull = 'git pull' if remote == 'origin' else f'git pull {remote} {branch}'
-        s += f"⚠️ YOLOv5 is out of date by {n} commit{'s' * (n > 1)}. Use `{pull}` or `git clone {url}` to update."
+        s += f"⚠️ YOLOv5 is out of date by {n} commit{'s' * (n > 1)}. Use '{pull}' or 'git clone {url}' to update."
     else:
         s += f'up to date with {url} ✅'
     LOGGER.info(s)
 
 
-def check_python(minimum='3.7.0'):
+@WorkingDirectory(ROOT)
+def check_git_info(path='.'):
+    # YOLOv5 git info check, return {remote, branch, commit}
+    check_requirements('gitpython')
+    import git
+    try:
+        repo = git.Repo(path)
+        remote = repo.remotes.origin.url.replace('.git', '')  # i.e. 'https://github.com/ultralytics/yolov5'
+        commit = repo.head.commit.hexsha  # i.e. '3134699c73af83aac2a481435550b968d5792c0d'
+        try:
+            branch = repo.active_branch.name  # i.e. 'main'
+        except TypeError:  # not on any branch
+            branch = None  # i.e. 'detached HEAD' state
+        return {'remote': remote, 'branch': branch, 'commit': commit}
+    except git.exc.InvalidGitRepositoryError:  # path is not a git dir
+        return {'remote': None, 'branch': None, 'commit': None}
+
+
+def check_python(minimum='3.8.0'):
     # Check current python version vs. required python version
     check_version(platform.python_version(), minimum, name='Python ', hard=True)
 
@@ -336,41 +398,6 @@ def check_version(current='0.0.0', minimum='0.0.0', name='version ', pinned=Fals
     return result
 
 
-@TryExcept()
-def check_requirements(requirements=ROOT / 'requirements.txt', exclude=(), install=True, cmds=''):
-    # Check installed dependencies meet YOLOv5 requirements (pass *.txt file or list of packages or single package str)
-    prefix = colorstr('red', 'bold', 'requirements:')
-    check_python()  # check python version
-    if isinstance(requirements, Path):  # requirements.txt file
-        file = requirements.resolve()
-        assert file.exists(), f"{prefix} {file} not found, check failed."
-        with file.open() as f:
-            requirements = [f'{x.name}{x.specifier}' for x in pkg.parse_requirements(f) if x.name not in exclude]
-    elif isinstance(requirements, str):
-        requirements = [requirements]
-
-    s = ''
-    n = 0
-    for r in requirements:
-        try:
-            pkg.require(r)
-        except (pkg.VersionConflict, pkg.DistributionNotFound):  # exception if requirements not met
-            s += f'"{r}" '
-            n += 1
-
-    if s and install and AUTOINSTALL:  # check environment variable
-        LOGGER.info(f"{prefix} YOLOv5 requirement{'s' * (n > 1)} {s}not found, attempting AutoUpdate...")
-        try:
-            assert check_online(), "AutoUpdate skipped (offline)"
-            LOGGER.info(check_output(f'pip install {s} {cmds}', shell=True).decode())
-            source = file if 'file' in locals() else requirements
-            s = f"{prefix} {n} package{'s' * (n > 1)} updated per {source}\n" \
-                f"{prefix} ⚠️ {colorstr('bold', 'Restart runtime or rerun command for updates to take effect')}\n"
-            LOGGER.info(s)
-        except Exception as e:
-            LOGGER.warning(f'{prefix} ❌ {e}')
-
-
 def check_img_size(imgsz, s=32, floor=0):
     # Verify image size is a multiple of stride s in each dimension
     if isinstance(imgsz, int):  # integer i.e. img_size=640
@@ -383,22 +410,23 @@ def check_img_size(imgsz, s=32, floor=0):
     return new_size
 
 
-def check_imshow():
+def check_imshow(warn=False):
     # Check if environment supports image displays
     try:
-        assert not is_docker(), 'cv2.imshow() is disabled in Docker environments'
-        assert not is_colab(), 'cv2.imshow() is disabled in Google Colab environments'
+        assert not is_jupyter()
+        assert not is_docker()
         cv2.imshow('test', np.zeros((1, 1, 3)))
         cv2.waitKey(1)
         cv2.destroyAllWindows()
         cv2.waitKey(1)
         return True
     except Exception as e:
-        LOGGER.warning(f'WARNING ⚠️ Environment does not support cv2.imshow() or PIL Image.show() image displays\n{e}')
+        if warn:
+            LOGGER.warning(f'WARNING ⚠️ Environment does not support cv2.imshow() or PIL Image.show()\n{e}')
         return False
 
 
-def check_suffix(file='yolov5s.pt', suffix=('.pt',), msg=''):
+def check_suffix(file='yolov5s.pt', suffix=('.pt', ), msg=''):
     # Check file(s) for acceptable suffix
     if file and suffix:
         if isinstance(suffix, str):
@@ -406,7 +434,7 @@ def check_suffix(file='yolov5s.pt', suffix=('.pt',), msg=''):
         for f in file if isinstance(file, (list, tuple)) else [file]:
             s = Path(f).suffix.lower()  # file suffix
             if len(s):
-                assert s in suffix, f"{msg}{f} acceptable suffix is {suffix}"
+                assert s in suffix, f'{msg}{f} acceptable suffix is {suffix}'
 
 
 def check_yaml(file, suffix=('.yaml', '.yml')):
@@ -418,12 +446,12 @@ def check_file(file, suffix=''):
     # Search/download file (if necessary) and return path
     check_suffix(file, suffix)  # optional
     file = str(file)  # convert to str()
-    if Path(file).is_file() or not file:  # exists
+    if os.path.isfile(file) or not file:  # exists
         return file
     elif file.startswith(('http:/', 'https:/')):  # download
         url = file  # warning: Pathlib turns :// -> :/
         file = Path(urllib.parse.unquote(file).split('?')[0]).name  # '%2F' to '/', split https://url.com/file.txt?auth
-        if Path(file).is_file():
+        if os.path.isfile(file):
             LOGGER.info(f'Found {url} locally at {file}')  # file already exists
         else:
             LOGGER.info(f'Downloading {url} to {file}...')
@@ -457,7 +485,7 @@ def check_dataset(data, autodownload=True):
 
     # Download (optional)
     extract_dir = ''
-    if isinstance(data, (str, Path)) and str(data).endswith('.zip'):  # i.e. gs://bucket/dir/coco128.zip
+    if isinstance(data, (str, Path)) and (is_zipfile(data) or is_tarfile(data)):
         download(data, dir=f'{DATASETS_DIR}/{Path(data).stem}', unzip=True, delete=False, curl=False, threads=1)
         data = next((DATASETS_DIR / Path(data).stem).rglob('*.yaml'))
         extract_dir, autodownload = data.parent, False
@@ -468,15 +496,17 @@ def check_dataset(data, autodownload=True):
 
     # Checks
     for k in 'train', 'val', 'names':
-        assert k in data, f"data.yaml '{k}:' field missing ❌"
+        assert k in data, emojis(f"data.yaml '{k}:' field missing ❌")
     if isinstance(data['names'], (list, tuple)):  # old array format
         data['names'] = dict(enumerate(data['names']))  # convert to dict
+    assert all(isinstance(k, int) for k in data['names'].keys()), 'data.yaml names keys must be integers, i.e. 2: car'
     data['nc'] = len(data['names'])
 
     # Resolve paths
     path = Path(extract_dir or data.get('path') or '')  # optional 'path' default to '.'
     if not path.is_absolute():
         path = (ROOT / path).resolve()
+        data['path'] = path  # download scripts
     for k in 'train', 'val', 'test':
         if data.get(k):  # prepend path
             if isinstance(data[k], str):
@@ -501,17 +531,17 @@ def check_dataset(data, autodownload=True):
                 LOGGER.info(f'Downloading {s} to {f}...')
                 torch.hub.download_url_to_file(s, f)
                 Path(DATASETS_DIR).mkdir(parents=True, exist_ok=True)  # create root
-                ZipFile(f).extractall(path=DATASETS_DIR)  # unzip
+                unzip_file(f, path=DATASETS_DIR)  # unzip
                 Path(f).unlink()  # remove zip
                 r = None  # success
             elif s.startswith('bash '):  # bash script
                 LOGGER.info(f'Running {s} ...')
-                r = os.system(s)
+                r = subprocess.run(s, shell=True)
             else:  # python script
                 r = exec(s, {'yaml': data})  # return None
             dt = f'({round(time.time() - t, 1)}s)'
-            s = f"success ✅ {dt}, saved to {colorstr('bold', DATASETS_DIR)}" if r in (0, None) else f"failure {dt} ❌"
-            LOGGER.info(f"Dataset download {s}")
+            s = f"success ✅ {dt}, saved to {colorstr('bold', DATASETS_DIR)}" if r in (0, None) else f'failure {dt} ❌'
+            LOGGER.info(f'Dataset download {s}')
     check_font('Arial.ttf' if is_ascii(data['names']) else 'Arial.Unicode.ttf', progress=True)  # download fonts
     return data  # dictionary
 
@@ -556,6 +586,16 @@ def yaml_save(file='data.yaml', data={}):
         yaml.safe_dump({k: str(v) if isinstance(v, Path) else v for k, v in data.items()}, f, sort_keys=False)
 
 
+def unzip_file(file, path=None, exclude=('.DS_Store', '__MACOSX')):
+    # Unzip a *.zip file to path/, excluding files containing strings in exclude list
+    if path is None:
+        path = Path(file).parent  # default path
+    with ZipFile(file) as zipObj:
+        for f in zipObj.namelist():  # list all archived filenames in the zip
+            if all(x not in f for x in exclude):
+                zipObj.extract(f, path=path)
+
+
 def url2file(url):
     # Convert URL to filename, i.e. https://url.com/file.txt?auth -> file.txt
     url = str(Path(url)).replace(':/', '://')  # Pathlib turns :// -> :/
@@ -567,17 +607,14 @@ def download(url, dir='.', unzip=True, delete=True, curl=False, threads=1, retry
     def download_one(url, dir):
         # Download 1 file
         success = True
-        if Path(url).is_file():
+        if os.path.isfile(url):
             f = Path(url)  # filename
         else:  # does not exist
             f = dir / Path(url).name
             LOGGER.info(f'Downloading {url} to {f}...')
             for i in range(retry + 1):
                 if curl:
-                    s = 'sS' if threads > 1 else ''  # silent
-                    r = os.system(
-                        f'curl -# -{s}L "{url}" -o "{f}" --retry 9 -C -')  # curl download with retry, continue
-                    success = r == 0
+                    success = curl_download(url, f, silent=(threads > 1))
                 else:
                     torch.hub.download_url_to_file(url, f, progress=threads == 1)  # torch download
                     success = f.is_file()
@@ -588,14 +625,14 @@ def download(url, dir='.', unzip=True, delete=True, curl=False, threads=1, retry
                 else:
                     LOGGER.warning(f'❌ Failed to download {url}...')
 
-        if unzip and success and f.suffix in ('.zip', '.tar', '.gz'):
+        if unzip and success and (f.suffix == '.gz' or is_zipfile(f) or is_tarfile(f)):
             LOGGER.info(f'Unzipping {f}...')
-            if f.suffix == '.zip':
-                ZipFile(f).extractall(path=dir)  # unzip
-            elif f.suffix == '.tar':
-                os.system(f'tar xf {f} --directory {f.parent}')  # unzip
+            if is_zipfile(f):
+                unzip_file(f, dir)  # unzip
+            elif is_tarfile(f):
+                subprocess.run(['tar', 'xf', f, '--directory', f.parent], check=True)  # unzip
             elif f.suffix == '.gz':
-                os.system(f'tar xfz {f} --directory {f.parent}')  # unzip
+                subprocess.run(['tar', 'xfz', f, '--directory', f.parent], check=True)  # unzip
             if delete:
                 f.unlink()  # remove zip
 
@@ -620,7 +657,7 @@ def make_divisible(x, divisor):
 
 def clean_str(s):
     # Cleans a string by replacing special characters with underscore _
-    return re.sub(pattern="[|@#!¡·$€%&()=?¿^*;:,¨´><+]", repl="_", string=s)
+    return re.sub(pattern='[|@#!¡·$€%&()=?¿^*;:,¨´><+]', repl='_', string=s)
 
 
 def one_cycle(y1=0.0, y2=1.0, steps=100):
@@ -695,30 +732,30 @@ def coco80_to_coco91_class():  # converts 80-index (val2014) to 91-index (paper)
 def xyxy2xywh(x):
     # Convert nx4 boxes from [x1, y1, x2, y2] to [x, y, w, h] where xy1=top-left, xy2=bottom-right
     y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
-    y[:, 0] = (x[:, 0] + x[:, 2]) / 2  # x center
-    y[:, 1] = (x[:, 1] + x[:, 3]) / 2  # y center
-    y[:, 2] = x[:, 2] - x[:, 0]  # width
-    y[:, 3] = x[:, 3] - x[:, 1]  # height
+    y[..., 0] = (x[..., 0] + x[..., 2]) / 2  # x center
+    y[..., 1] = (x[..., 1] + x[..., 3]) / 2  # y center
+    y[..., 2] = x[..., 2] - x[..., 0]  # width
+    y[..., 3] = x[..., 3] - x[..., 1]  # height
     return y
 
 
 def xywh2xyxy(x):
     # Convert nx4 boxes from [x, y, w, h] to [x1, y1, x2, y2] where xy1=top-left, xy2=bottom-right
     y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
-    y[:, 0] = x[:, 0] - x[:, 2] / 2  # top left x
-    y[:, 1] = x[:, 1] - x[:, 3] / 2  # top left y
-    y[:, 2] = x[:, 0] + x[:, 2] / 2  # bottom right x
-    y[:, 3] = x[:, 1] + x[:, 3] / 2  # bottom right y
+    y[..., 0] = x[..., 0] - x[..., 2] / 2  # top left x
+    y[..., 1] = x[..., 1] - x[..., 3] / 2  # top left y
+    y[..., 2] = x[..., 0] + x[..., 2] / 2  # bottom right x
+    y[..., 3] = x[..., 1] + x[..., 3] / 2  # bottom right y
     return y
 
 
 def xywhn2xyxy(x, w=640, h=640, padw=0, padh=0):
     # Convert nx4 boxes from [x, y, w, h] normalized to [x1, y1, x2, y2] where xy1=top-left, xy2=bottom-right
     y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
-    y[:, 0] = w * (x[:, 0] - x[:, 2] / 2) + padw  # top left x
-    y[:, 1] = h * (x[:, 1] - x[:, 3] / 2) + padh  # top left y
-    y[:, 2] = w * (x[:, 0] + x[:, 2] / 2) + padw  # bottom right x
-    y[:, 3] = h * (x[:, 1] + x[:, 3] / 2) + padh  # bottom right y
+    y[..., 0] = w * (x[..., 0] - x[..., 2] / 2) + padw  # top left x
+    y[..., 1] = h * (x[..., 1] - x[..., 3] / 2) + padh  # top left y
+    y[..., 2] = w * (x[..., 0] + x[..., 2] / 2) + padw  # bottom right x
+    y[..., 3] = h * (x[..., 1] + x[..., 3] / 2) + padh  # bottom right y
     return y
 
 
@@ -727,18 +764,18 @@ def xyxy2xywhn(x, w=640, h=640, clip=False, eps=0.0):
     if clip:
         clip_boxes(x, (h - eps, w - eps))  # warning: inplace clip
     y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
-    y[:, 0] = ((x[:, 0] + x[:, 2]) / 2) / w  # x center
-    y[:, 1] = ((x[:, 1] + x[:, 3]) / 2) / h  # y center
-    y[:, 2] = (x[:, 2] - x[:, 0]) / w  # width
-    y[:, 3] = (x[:, 3] - x[:, 1]) / h  # height
+    y[..., 0] = ((x[..., 0] + x[..., 2]) / 2) / w  # x center
+    y[..., 1] = ((x[..., 1] + x[..., 3]) / 2) / h  # y center
+    y[..., 2] = (x[..., 2] - x[..., 0]) / w  # width
+    y[..., 3] = (x[..., 3] - x[..., 1]) / h  # height
     return y
 
 
 def xyn2xy(x, w=640, h=640, padw=0, padh=0):
     # Convert normalized segments into pixel segments, shape (n,2)
     y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
-    y[:, 0] = w * x[:, 0] + padw  # top left x
-    y[:, 1] = h * x[:, 1] + padh  # top left y
+    y[..., 0] = w * x[..., 0] + padw  # top left x
+    y[..., 1] = h * x[..., 1] + padh  # top left y
     return y
 
 
@@ -778,14 +815,14 @@ def scale_boxes(img1_shape, boxes, img0_shape, ratio_pad=None):
         gain = ratio_pad[0][0]
         pad = ratio_pad[1]
 
-    boxes[:, [0, 2]] -= pad[0]  # x padding
-    boxes[:, [1, 3]] -= pad[1]  # y padding
-    boxes[:, :4] /= gain
+    boxes[..., [0, 2]] -= pad[0]  # x padding
+    boxes[..., [1, 3]] -= pad[1]  # y padding
+    boxes[..., :4] /= gain
     clip_boxes(boxes, img0_shape)
     return boxes
 
 
-def scale_segments(img1_shape, segments, img0_shape, ratio_pad=None):
+def scale_segments(img1_shape, segments, img0_shape, ratio_pad=None, normalize=False):
     # Rescale coords (xyxy) from img1_shape to img0_shape
     if ratio_pad is None:  # calculate from img0_shape
         gain = min(img1_shape[0] / img0_shape[0], img1_shape[1] / img0_shape[1])  # gain  = old / new
@@ -798,29 +835,32 @@ def scale_segments(img1_shape, segments, img0_shape, ratio_pad=None):
     segments[:, 1] -= pad[1]  # y padding
     segments /= gain
     clip_segments(segments, img0_shape)
+    if normalize:
+        segments[:, 0] /= img0_shape[1]  # width
+        segments[:, 1] /= img0_shape[0]  # height
     return segments
 
 
 def clip_boxes(boxes, shape):
     # Clip boxes (xyxy) to image shape (height, width)
     if isinstance(boxes, torch.Tensor):  # faster individually
-        boxes[:, 0].clamp_(0, shape[1])  # x1
-        boxes[:, 1].clamp_(0, shape[0])  # y1
-        boxes[:, 2].clamp_(0, shape[1])  # x2
-        boxes[:, 3].clamp_(0, shape[0])  # y2
+        boxes[..., 0].clamp_(0, shape[1])  # x1
+        boxes[..., 1].clamp_(0, shape[0])  # y1
+        boxes[..., 2].clamp_(0, shape[1])  # x2
+        boxes[..., 3].clamp_(0, shape[0])  # y2
     else:  # np.array (faster grouped)
-        boxes[:, [0, 2]] = boxes[:, [0, 2]].clip(0, shape[1])  # x1, x2
-        boxes[:, [1, 3]] = boxes[:, [1, 3]].clip(0, shape[0])  # y1, y2
+        boxes[..., [0, 2]] = boxes[..., [0, 2]].clip(0, shape[1])  # x1, x2
+        boxes[..., [1, 3]] = boxes[..., [1, 3]].clip(0, shape[0])  # y1, y2
 
 
-def clip_segments(boxes, shape):
+def clip_segments(segments, shape):
     # Clip segments (xy1,xy2,...) to image shape (height, width)
-    if isinstance(boxes, torch.Tensor):  # faster individually
-        boxes[:, 0].clamp_(0, shape[1])  # x
-        boxes[:, 1].clamp_(0, shape[0])  # y
+    if isinstance(segments, torch.Tensor):  # faster individually
+        segments[:, 0].clamp_(0, shape[1])  # x
+        segments[:, 1].clamp_(0, shape[0])  # y
     else:  # np.array (faster grouped)
-        boxes[:, 0] = boxes[:, 0].clip(0, shape[1])  # x
-        boxes[:, 1] = boxes[:, 1].clip(0, shape[0])  # y
+        segments[:, 0] = segments[:, 0].clip(0, shape[1])  # x
+        segments[:, 1] = segments[:, 1].clip(0, shape[0])  # y
 
 
 def non_max_suppression(
@@ -840,6 +880,9 @@ def non_max_suppression(
          list of detections, on (n,6) tensor per image [xyxy, conf, cls]
     """
 
+    # Checks
+    assert 0 <= conf_thres <= 1, f'Invalid Confidence threshold {conf_thres}, valid values are between 0.0 and 1.0'
+    assert 0 <= iou_thres <= 1, f'Invalid IoU {iou_thres}, valid values are between 0.0 and 1.0'
     if isinstance(prediction, (list, tuple)):  # YOLOv5 model in validation model, output = (inference_out, loss_out)
         prediction = prediction[0]  # select only inference output
 
@@ -850,10 +893,6 @@ def non_max_suppression(
     bs = prediction.shape[0]  # batch size
     nc = prediction.shape[2] - nm - 5  # number of classes
     xc = prediction[..., 4] > conf_thres  # candidates
-
-    # Checks
-    assert 0 <= conf_thres <= 1, f'Invalid Confidence threshold {conf_thres}, valid values are between 0.0 and 1.0'
-    assert 0 <= iou_thres <= 1, f'Invalid IoU {iou_thres}, valid values are between 0.0 and 1.0'
 
     # Settings
     # min_wh = 2  # (pixels) minimum box width and height
@@ -912,17 +951,13 @@ def non_max_suppression(
         n = x.shape[0]  # number of boxes
         if not n:  # no boxes
             continue
-        elif n > max_nms:  # excess boxes
-            x = x[x[:, 4].argsort(descending=True)[:max_nms]]  # sort by confidence
-        else:
-            x = x[x[:, 4].argsort(descending=True)]  # sort by confidence
+        x = x[x[:, 4].argsort(descending=True)[:max_nms]]  # sort by confidence and remove excess boxes
 
         # Batched NMS
         c = x[:, 5:6] * (0 if agnostic else max_wh)  # classes
         boxes, scores = x[:, :4] + c, x[:, 4]  # boxes (offset by class), scores
         i = torchvision.ops.nms(boxes, scores, iou_thres)  # NMS
-        if i.shape[0] > max_det:  # limit detections
-            i = i[:max_det]
+        i = i[:max_det]  # limit detections
         if merge and (1 < n < 3E3):  # Merge NMS (boxes merged using weighted mean)
             # update boxes as boxes(i,4) = weights(i,n) * boxes(n,4)
             iou = box_iou(boxes[i], boxes) > iou_thres  # iou matrix
@@ -946,7 +981,7 @@ def strip_optimizer(f='best.pt', s=''):  # from utils.general import *; strip_op
     x = torch.load(f, map_location=torch.device('cpu'))
     if x.get('ema'):
         x['model'] = x['ema']  # replace model with ema
-    for k in 'optimizer', 'best_fitness', 'wandb_id', 'ema', 'updates':  # keys
+    for k in 'optimizer', 'best_fitness', 'ema', 'updates':  # keys
         x[k] = None
     x['epoch'] = -1
     x['model'].half()  # to FP16
@@ -957,11 +992,10 @@ def strip_optimizer(f='best.pt', s=''):  # from utils.general import *; strip_op
     LOGGER.info(f"Optimizer stripped from {f},{f' saved as {s},' if s else ''} {mb:.1f}MB")
 
 
-def print_mutation(results, hyp, save_dir, bucket, prefix=colorstr('evolve: ')):
+def print_mutation(keys, results, hyp, save_dir, bucket, prefix=colorstr('evolve: ')):
     evolve_csv = save_dir / 'evolve.csv'
     evolve_yaml = save_dir / 'hyp_evolve.yaml'
-    keys = ('metrics/precision', 'metrics/recall', 'metrics/mAP_0.5', 'metrics/mAP_0.5:0.95', 'val/box_loss',
-            'val/obj_loss', 'val/cls_loss') + tuple(hyp.keys())  # [results + hyps]
+    keys = tuple(keys) + tuple(hyp.keys())  # [results + hyps]
     keys = tuple(x.strip() for x in keys)
     vals = results + tuple(hyp.values())
     n = len(keys)
@@ -970,7 +1004,7 @@ def print_mutation(results, hyp, save_dir, bucket, prefix=colorstr('evolve: ')):
     if bucket:
         url = f'gs://{bucket}/evolve.csv'
         if gsutil_getsize(url) > (evolve_csv.stat().st_size if evolve_csv.exists() else 0):
-            os.system(f'gsutil cp {url} {save_dir}')  # download evolve.csv if larger than local
+            subprocess.run(['gsutil', 'cp', f'{url}', f'{save_dir}'])  # download evolve.csv if larger than local
 
     # Log to evolve.csv
     s = '' if evolve_csv.exists() else (('%20s,' * n % keys).rstrip(',') + '\n')  # add header
@@ -979,7 +1013,7 @@ def print_mutation(results, hyp, save_dir, bucket, prefix=colorstr('evolve: ')):
 
     # Save yaml
     with open(evolve_yaml, 'w') as f:
-        data = pd.read_csv(evolve_csv)
+        data = pd.read_csv(evolve_csv, skipinitialspace=True)
         data = data.rename(columns=lambda x: x.strip())  # strip keys
         i = np.argmax(fitness(data.values[:, :4]))  #
         generations = len(data)
@@ -994,7 +1028,7 @@ def print_mutation(results, hyp, save_dir, bucket, prefix=colorstr('evolve: ')):
                                                                                          for x in vals) + '\n\n')
 
     if bucket:
-        os.system(f'gsutil cp {evolve_csv} {evolve_yaml} gs://{bucket}')  # upload
+        subprocess.run(['gsutil', 'cp', f'{evolve_csv}', f'{evolve_yaml}', f'gs://{bucket}'])  # upload
 
 
 def apply_classifier(x, model, img, im0):
@@ -1058,17 +1092,17 @@ def increment_path(path, exist_ok=False, sep='', mkdir=False):
     return path
 
 
-# OpenCV Chinese-friendly functions ------------------------------------------------------------------------------------
+# OpenCV Multilanguage-friendly functions ------------------------------------------------------------------------------------
 imshow_ = cv2.imshow  # copy to avoid recursion errors
 
 
-def imread(path, flags=cv2.IMREAD_COLOR):
-    return cv2.imdecode(np.fromfile(path, np.uint8), flags)
+def imread(filename, flags=cv2.IMREAD_COLOR):
+    return cv2.imdecode(np.fromfile(filename, np.uint8), flags)
 
 
-def imwrite(path, im):
+def imwrite(filename, img):
     try:
-        cv2.imencode(Path(path).suffix, im)[1].tofile(path)
+        cv2.imencode(Path(filename).suffix, img)[1].tofile(filename)
         return True
     except Exception:
         return False
@@ -1078,7 +1112,7 @@ def imshow(path, im):
     imshow_(path.encode('unicode_escape').decode(), im)
 
 
-cv2.imread, cv2.imwrite, cv2.imshow = imread, imwrite, imshow  # redefine
+if Path(inspect.stack()[0].filename).parent.parent.as_posix() in inspect.stack()[-1].filename:
+    cv2.imread, cv2.imwrite, cv2.imshow = imread, imwrite, imshow  # redefine
 
 # Variables ------------------------------------------------------------------------------------------------------------
-NCOLS = 0 if is_docker() else shutil.get_terminal_size().columns  # terminal window size for tqdm
