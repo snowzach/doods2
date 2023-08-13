@@ -1,4 +1,4 @@
-# YOLOv5 🚀 by Ultralytics, GPL-3.0 license
+# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
 """
 utils/initialization
 """
@@ -23,7 +23,7 @@ class TryExcept(contextlib.ContextDecorator):
 
     def __exit__(self, exc_type, value, traceback):
         if value:
-            print(emojis(f'{self.msg}{value}'))
+            print(emojis(f"{self.msg}{': ' if self.msg else ''}{value}"))
         return True
 
 
@@ -37,6 +37,16 @@ def threaded(func):
     return wrapper
 
 
+def join_threads(verbose=False):
+    # Join all daemon threads, i.e. atexit.register(lambda: join_threads())
+    main_thread = threading.current_thread()
+    for t in threading.enumerate():
+        if t is not main_thread:
+            if verbose:
+                print(f'Joining thread {t.name}')
+            t.join()
+
+
 def notebook_init(verbose=True):
     # Check system software and hardware
     print('Checking setup...')
@@ -44,24 +54,29 @@ def notebook_init(verbose=True):
     import os
     import shutil
 
-    from utils.general import check_font, check_requirements, is_colab
+    from ultralytics.utils.checks import check_requirements
+
+    from utils.general import check_font, is_colab
     from utils.torch_utils import select_device  # imports
 
-    check_requirements(('psutil', 'IPython'))
     check_font()
 
     import psutil
-    from IPython import display  # to display images and clear console output
 
+    if check_requirements('wandb', install=False):
+        os.system('pip uninstall -y wandb')  # eliminate unexpected account creation prompt with infinite hang
     if is_colab():
         shutil.rmtree('/content/sample_data', ignore_errors=True)  # remove colab /sample_data directory
 
     # System info
+    display = None
     if verbose:
         gb = 1 << 30  # bytes to GiB (1024 ** 3)
         ram = psutil.virtual_memory().total
-        total, used, free = shutil.disk_usage("/")
-        display.clear_output()
+        total, used, free = shutil.disk_usage('/')
+        with contextlib.suppress(Exception):  # clear display if ipython is installed
+            from IPython import display
+            display.clear_output()
         s = f'({os.cpu_count()} CPUs, {ram / gb:.1f} GB RAM, {(total - free) / gb:.1f}/{total / gb:.1f} GB disk)'
     else:
         s = ''
