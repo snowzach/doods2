@@ -205,14 +205,13 @@ doods:
       type: tflite
       modelFile: models/coco_ssd_mobilenet_v1_1.0_quant.tflite
       labelFile: models/coco_labels0.txt
-      labelsStartFromZero: true # The labels file starts from index zero instead of 1 like most labels
-      hwAccel: false
-      numThreads: 4
     - name: tensorflow
       type: tensorflow
       modelFile: models/faster_rcnn_inception_v2_coco_2018_01_28.pb
       labelFile: models/coco_labels1.txt
-      hwAccel: false
+    - name: pytorch
+      type: pytorch
+      modelFile: ultralytics/yolov5,yolov5s
 ```
 
 You can pass a new configuration file using an environment variable `CONFIG_FILE`. There is also a `--config` and `-c` command line option.
