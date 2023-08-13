@@ -169,8 +169,9 @@ class Doods:
             for label in detect.detect:
                 global_labels.append("%s:%d" % (label, detect.detect[label]))
             if len(global_labels) > 0:
-                cv2.putText(image, ','.join(global_labels), (5, 15), font, 
-                    self.config.globals.fontScale, tuple(self.config.globals.fontColor), self.config.globals.fontThickness, lineType)
+                if self.config.globals.fontThickness:
+                    cv2.putText(image, ','.join(global_labels), (5, 15), font, 
+                        self.config.globals.fontScale, tuple(self.config.globals.fontColor), self.config.globals.fontThickness, lineType)
 
         # Draw the region detection labels
         if self.config.regions.enabled:
@@ -178,18 +179,22 @@ class Doods:
                 region_labels = []
                 for label in region.detect:
                     region_labels.append("%s:%d" % (label, region.detect[label]))
-                cv2.putText(image, ','.join(region_labels), (int(region.left*width), int(region.top*height)-2), 
-                    font, self.config.regions.fontScale, tuple(reversed(self.config.regions.fontColor)), self.config.regions.fontThickness, lineType)
-                cv2.rectangle(image, (int(region.left*width), int(region.top*height)), (int(region.right*width), int(region.bottom*height)), 
-                    color=tuple(reversed(self.config.regions.boxColor)), thickness=self.config.regions.boxThickness)
+                if self.config.regions.fontThickness:
+                    cv2.putText(image, ','.join(region_labels), (int(region.left*width), int(region.top*height)-2), 
+                        font, self.config.regions.fontScale, tuple(reversed(self.config.regions.fontColor)), self.config.regions.fontThickness, lineType)
+                if self.config.regions.boxThickness:
+                    cv2.rectangle(image, (int(region.left*width), int(region.top*height)), (int(region.right*width), int(region.bottom*height)), 
+                        color=tuple(reversed(self.config.regions.boxColor)), thickness=self.config.regions.boxThickness)
 
         # Draw the detections
         if self.config.boxes.enabled:
             for detection in ret.detections:
-                cv2.putText(image, "%s:%d" % (detection.label, detection.confidence), (int(detection.left*width), int(detection.bottom*height)-2), 
-                    font, self.config.boxes.fontScale, tuple(reversed(self.config.boxes.fontColor)), self.config.boxes.fontThickness, lineType)
-                cv2.rectangle(image, (int(detection.left*width), int(detection.top*height)), (int(detection.right*width), int(detection.bottom*height)), 
-                    color=tuple(reversed(self.config.boxes.boxColor)), thickness=self.config.boxes.boxThickness)
+                if self.config.boxes.fontThickness:
+                    cv2.putText(image, "%s:%d" % (detection.label, detection.confidence), (int(detection.left*width), int(detection.bottom*height)-2), 
+                        font, self.config.boxes.fontScale, tuple(reversed(self.config.boxes.fontColor)), self.config.boxes.fontThickness, lineType)
+                if self.config.boxes.boxThickness:
+                    cv2.rectangle(image, (int(detection.left*width), int(detection.top*height)), (int(detection.right*width), int(detection.bottom*height)), 
+                        color=tuple(reversed(self.config.boxes.boxColor)), thickness=self.config.boxes.boxThickness)
 
         ret.image = cv2.imencode(detect.image, image)[1].tostring()
         return ret
