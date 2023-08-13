@@ -183,22 +183,22 @@ doods:
   log: detections
   boxes:
     enabled: True
-    boxColor: [0, 255, 0]
+    boxColor: [0, 255, 0] # Or hex string "#00ff00"
     boxThickness: 1
     fontScale: 1.2
-    fontColor: [0, 255, 0]
+    fontColor: [0, 255, 0] # Or hex string "#00ff00"
     fontThickness: 1
   regions:
     enabled: True
-    boxColor: [255, 0, 255]
+    boxColor: [255, 0, 255] # Or hex string "#ff00ff"
     boxThickness: 1
     fontScale: 1.2
-    fontColor: [255, 0, 255]
+    fontColor: [255, 0, 255] # Or hex string "#ff00ff"
     fontThickness: 1
   globals:
     enabled: True
     fontScale: 1.2
-    fontColor: [255, 255, 0]
+    fontColor: [255, 255, 0] # Or hex string "#ffff00"
     fontThickness: 1
   detectors:
     - name: default

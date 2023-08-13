@@ -30,6 +30,9 @@ def unflatten_dict(d):
 
     return ret
 
+def hex_to_rgb(hex):
+  return tuple(int(hex.strip('#')[i:i+2], 16) for i in (0, 2, 4)) 
+
 def main():
     parser = argparse.ArgumentParser(description='DOODS2 - Dedicated Open Object Detection Service')
     parser.add_argument('--config', '-c', help='Configuration File', default='config.yaml')
@@ -45,6 +48,19 @@ def main():
             config = Config(**unflatten_dict(yaml.safe_load(stream)))
         except yaml.YAMLError as exc:
             print(exc)
+
+    # It's ugly and I'm sure there's a better way to do it, but if we specified colors as hex strings
+    # convert them to color arrays.
+    if isinstance(config.doods.boxes.boxColor, str):
+        config.doods.boxes.boxColor = hex_to_rgb(config.doods.boxes.boxColor)
+    if isinstance(config.doods.boxes.fontColor, str):
+        config.doods.boxes.fontColor = hex_to_rgb(config.doods.boxes.fontColor)
+    if isinstance(config.doods.regions.boxColor, str):
+        config.doods.regions.boxColor = hex_to_rgb(config.doods.regions.boxColor)
+    if isinstance(config.doods.regions.fontColor, str):
+        config.doods.regions.fontColor = hex_to_rgb(config.doods.regions.fontColor)
+    if isinstance(config.doods.globals.fontColor, str):
+        config.doods.globals.fontColor = hex_to_rgb(config.doods.globals.fontColor)
 
     # Setup logging
     level = logging.getLevelName(config.logger.level.upper())

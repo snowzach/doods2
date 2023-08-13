@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 from pydantic import BaseSettings, Extra
 from odrpc import MqttDetectRequest
 
@@ -15,24 +15,24 @@ class DoodsDetectorConfig(BaseSettings):
 
 class DoodsBoxesConfig(BaseSettings):
     enabled: Optional[bool] = True
-    boxColor: Optional[List[int]] = [0, 255, 0]
+    boxColor: Optional[Union[List[int], str]] = [0, 255, 0]
     boxThickness: Optional[int] = 1
     fontScale: Optional[float] = 1.2
-    fontColor: Optional[List[int]] = [0, 255, 0]
+    fontColor: Optional[Union[List[int], str]] = [0, 255, 0]
     fontThickness: Optional[int] = 2
 
 class DoodsRegionsConfig(BaseSettings):
     enabled: Optional[bool] = True
-    boxColor: Optional[List[int]] = [0, 255, 0]
+    boxColor: Optional[Union[List[int], str]] = [0, 255, 0]
     boxThickness: Optional[int] = 1
     fontScale: Optional[float] = 1.2
-    fontColor: Optional[List[int]] = [0, 255, 0]
+    fontColor: Optional[Union[List[int], str]] = [0, 255, 0]
     fontThickness: Optional[int] = 2
 
 class DoodsGlobalsConfig(BaseSettings):
     enabled: Optional[bool] = True
     fontScale: Optional[float] = 1.2
-    fontColor: Optional[List[int]] = [0, 255, 0]
+    fontColor: Optional[Union[List[int], str]] = [0, 255, 0]
     fontThickness: Optional[int] = 2
 
 class DoodsConfig(BaseSettings):
