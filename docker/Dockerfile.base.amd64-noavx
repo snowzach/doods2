@@ -1,4 +1,4 @@
-FROM docker.io/snowzach/tensorflow-multiarch:2.7.0-amd64-noavx as base
+FROM docker.io/snowzach/tensorflow-multiarch:2.14.0-amd64-noavx as base
 
 # Install dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -6,16 +6,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
     gnupg \
-    libjpeg8 \
+    libjpeg62-turbo \
     libpng16-16 \
-    libavcodec58 \
-    libavformat58 \
-    libswscale5 \
+    libavcodec59 \
+    libavformat59 \
+    libswscale6 \
     libgl1 \
     libglib2.0-0 \
     unzip && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/* 
+    rm -rf /var/lib/apt/lists/* && \
+    rm -f /usr/lib/python3.11/EXTERNALLY-MANAGED
 
 # Install Google EdgeTPU drivers
 RUN echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | tee /etc/apt/sources.list.d/coral-edgetpu.list && \
