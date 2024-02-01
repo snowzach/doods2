@@ -1,7 +1,7 @@
 FROM docker.io/snowzach/tensorflow-multiarch:2.14.0-amd64-noavx as base
 
 # Install dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get -y dist-upgrade && apt-get install -y --no-install-recommends \
     wget \
     curl \
     git \

@@ -212,6 +212,8 @@ doods:
     - name: pytorch
       type: pytorch
       modelFile: ultralytics/yolov5,yolov5s
+mqtt:
+  
 ```
 
 You can pass a new configuration file using an environment variable `CONFIG_FILE`. There is also a `--config` and `-c` command line option.
