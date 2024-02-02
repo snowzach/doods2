@@ -364,3 +364,36 @@ This is a model zoo for Tensorflow 2 models: https://github.com/tensorflow/model
 
 I think they are better but they generally are much slower and probably require a GPU to work in a reasonable amount of time.
 
+## MQTT Mode
+DOODS also supports a so called MQTT modes. In this mode, rather than listen via an HTTP api, it instead connects to an MQTT broker. 
+The config file will instead look like this:
+```
+mqtt:
+  broker:
+    host: 127.0.0.1
+    port: 1883
+    user: username     # optional
+    password: password # optional
+  api:
+    request_topic: doods2/request_topic
+    response_topic: doods2/response_topic
+  requests:
+    - id: first
+      detector_name: default
+      throttle: 2
+      detect:
+        "person": 40
+      data: rtsp://user:pass@whatever.com/stream1
+    - id: second
+      detector_name: tensorflow
+      throttle: 
+      detect:
+        "person": 40
+      data: rtsp://user:pass@whatever.com/stream2
+```
+
+You can then do a couple of things, you can send json formatted requests (same format as the HTTP API) to the request_topic and
+doods will respond on the response_topic. This is an asynchronous way to call doods via MQTT. The other thing you can do is 
+configure requests with streams (like RTSP) and it will read from the stream and stream back detections on the response_topic. This
+might be useful for an NVR service to get back responses as fast as the throttle settings. For instance, 5 means 1 detection every 5
+seconds. See the detection request section above for a list of all options. 
