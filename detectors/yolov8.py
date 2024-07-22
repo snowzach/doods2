@@ -1,3 +1,5 @@
+import odrpc
+import logging
 from ultralytics import YOLO
 from config import DoodsDetectorConfig
 
@@ -10,24 +12,30 @@ class YOLOv8:
             'model': config.modelFile,
         })
         self.logger = logging.getLogger("doods.yolov8."+config.name)
-        self.device = torch.device("cuda:0" if config.hwAccel else "cpu")
-        repo, modelName = config.modelFile.split(',',1)
-        self.torch_model = torch.hub.load(repo.strip(), modelName.strip())
         self.model = YOLO(config.modelFile.strip())
-        self.labels = self.model.names
+        if isinstance(self.model.names, dict):
+            self.labels = list(self.model.names.values())
+        else:
+            self.labels = self.model.names
         self.config.labels = self.labels
 
     def detect(self, image):
 
-        results = model.predict(source = image, verbose = True)
+        results = self.model.predict(source = image, verbose = True)
         (height, width, colors) = image.shape
 
         ret = odrpc.DetectResponse()
 
         for box in results[0].boxes:
-            (detection.top, detection.left, detection.bottom, detection.right) = box.xyxy.numpy()
-            detection.confidence = box.conf.numpy()
-            detection.label = self.labels[result['cls'].numpy()]
+            detection = odrpc.Detection()
+            (detection.left, detection.top, detection.right, detection.bottom) = box.xyxy.numpy().tolist()[0]
+            self.logger.info("top: %s, height: %s", detection.top, height)
+            detection.top = detection.top / height
+            detection.bottom = detection.bottom / height
+            detection.left = detection.left / width
+            detection.right = detection.right / width
+            detection.confidence = box.conf.item() * 100.0
+            detection.label = self.labels[int(box.cls.item())]
             ret.detections.append(detection)
     
         return ret
