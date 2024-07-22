@@ -297,12 +297,13 @@ services:
 ```
 
 # Supported Detectors / Models
-There are currently 3 supported dectector formats
+There are currently 5 supported dectector formats
 - tflite - Tensorflow lite `.tflite` models
 - tensorflow - Original tensoflow frozen models (Usually end with `.pb`)
-- pytorch - PyTorch based models like yolo
+- pytorch - PyTorch based models like yolov5
 - deepstack - Deepstack models suppor
-- tensorflow2 - DISABLED - The libraries required were huge (2.2GB) and it was too slow to be ussful for the time being.
+- yolov8 - YOLOv8 based models
+- tensorflow2 - DISABLED - The libraries required were huge (2.2GB) and it was too slow to be useful for the time being.
 
 ## Other Options
 - labelsStartFromZero: true - The labels file starts from index zero instead of 1 like most labels.
@@ -352,6 +353,9 @@ All you need to do is download the .pt files and list them as the model file in 
 If you receive a message that says `No module named 'models.yolo'` you are using a model that expects a very specific directory
 layout. You can fix the issue by downloading this file into your models directory adjacent to your model:
 `https://raw.githubusercontent.com/johnolafenwa/deepstack-trainer/main/models/yolo.py` This should resolve your issue.
+
+## YOLOv8 - .pt files
+Support for Ultralytics YOLOv8 based models. Provide a .pt file as model file in the config. Labels are embedded.
 
 ## Tensorflow 2 - Model Directory
 REMOVED: The dependencies for Tensorflow 2 Object detection were massive and it was really slow so I removed it for the time being.
