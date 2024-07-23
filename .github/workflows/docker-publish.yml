@@ -94,4 +94,4 @@ jobs:
           COSIGN_EXPERIMENTAL: "true"
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
-        run: cosign sign ${{ env.REGISTRY }}/${{ steps.lowercaseRepo.outputs.lowercase }}@${{ steps.build-and-push.outputs.digest }}
+        run: cosign sign --yes ${{ env.REGISTRY }}/${{ steps.lowercaseRepo.outputs.lowercase }}@${{ steps.build-and-push.outputs.digest }}
