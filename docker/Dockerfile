@@ -1,5 +1,5 @@
 ARG TAG=amd64
-FROM docker.io/snowzach/doods2:base-$TAG as base
+FROM docker.io/snowzach/doods2:base-$TAG AS base
 
 COPY --from=docker.io/snowzach/doods2:base-config /opt/doods/models /opt/doods/models
 COPY --from=docker.io/snowzach/doods2:base-config /opt/doods/config.yaml /opt/doods/config.yaml
@@ -12,7 +12,7 @@ WORKDIR /opt/doods
 
 ADD . .
 
-ENV TF_CPP_MIN_LOG_LEVEL 3
+ENV TF_CPP_MIN_LOG_LEVEL=3
 
 ENTRYPOINT ["python3", "main.py"]
 CMD ["api"]
