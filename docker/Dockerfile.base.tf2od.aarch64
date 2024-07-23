@@ -1,4 +1,4 @@
-FROM docker.io/snowzach/tensorflow-multiarch:2.7.0-aarch64 as base
+FROM docker.io/snowzach/tensorflow-multiarch:2.7.0-aarch64 AS base
 
 # Install Tensorflow Object Detection dependancies that cannot be installed via PIP for aarch64.
 RUN python3 -m pip install --no-cache-dir https://github.com/snowzach/doods2/releases/download/tf-v2.7.0-deps/tensorflow_addons-0.16.0.dev0-cp38-cp38-linux_aarch64.whl

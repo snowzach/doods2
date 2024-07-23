@@ -1,4 +1,4 @@
-FROM docker.io/tensorflow/tensorflow:2.14.0-gpu as base
+FROM docker.io/tensorflow/tensorflow:2.14.0-gpu AS base
 
 # Install dependencies
 RUN apt-get update && apt-get -y dist-upgrade && apt-get install -y --no-install-recommends \

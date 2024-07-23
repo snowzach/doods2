@@ -1,4 +1,4 @@
-FROM docker.io/snowzach/tensorflow-multiarch:2.14.0-aarch64 as base
+FROM docker.io/snowzach/tensorflow-multiarch:2.14.0-aarch64 AS base
 
 # Install dependencies
 RUN apt-get update && apt-get -y dist-upgrade && apt-get install -y --no-install-recommends \

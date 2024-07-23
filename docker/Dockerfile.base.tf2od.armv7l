@@ -1,4 +1,4 @@
-FROM docker.io/snowzach/tensorflow-multiarch:2.7.0-armv7l as base
+FROM docker.io/snowzach/tensorflow-multiarch:2.7.0-armv7l AS base
 
 # Install tensorflow python dependencies for which there are good packages.
 RUN apt-get update && apt-get install -y --no-install-recommends \

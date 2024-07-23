@@ -1,4 +1,4 @@
-FROM docker.io/snowzach/tensorflow-multiarch:2.7.0-amd64-noavx as base
+FROM docker.io/snowzach/tensorflow-multiarch:2.7.0-amd64-noavx AS base
 
 # Install apt dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
