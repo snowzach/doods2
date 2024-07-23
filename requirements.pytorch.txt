@@ -1,10 +1,9 @@
 seaborn>=0.11.0
-Pillow>=9.0.0
+pillow>=10.3.0
 image>=1.5.0
 tqdm>=4.64.0
 ipython>=8.5.0
 psutil>=5.9.3
 gitpython>=3.1.30
-setuptools>=68.0.0
-ultralytics>=8.0.153
-
+setuptools>=70.0.0
+ultralytics>=8.2.34

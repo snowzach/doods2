@@ -35,11 +35,10 @@ except ModuleNotFoundError:
     logger.info("Tensorflow2 Object Detection API not installed...")
 
 try:
-    from detectors.yolov8 import YOLOv8
-    detectors['yolov8'] = YOLOv8
+    from detectors.yolo import YOLO
+    detectors['yolo'] = YOLO
 except ModuleNotFoundError:
-    logger.info('YOLOv8 not installed...')
-
+    logger.info('YOLO not installed...')
 
 font                   = cv2.FONT_HERSHEY_PLAIN
 fontScale              = 1.2
@@ -64,6 +63,7 @@ detectors_load_precedence = [
     "tensorflow2",
     "deepstack",
     "pytorch",
+    "yolo",
 ]
 
 class MissingDetector:

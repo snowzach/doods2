@@ -1,18 +1,19 @@
 import odrpc
 import logging
-from ultralytics import YOLO
+from ultralytics import YOLO as uYOLO
 from config import DoodsDetectorConfig
 
-class YOLOv8:
+class YOLO:
     def __init__(self, config: DoodsDetectorConfig):
+        
         self.config = odrpc.Detector(**{
             'name': config.name,
-            'type': 'yolov8',
+            'type': 'yolo',
             'labels': [],
             'model': config.modelFile,
         })
-        self.logger = logging.getLogger("doods.yolov8."+config.name)
-        self.model = YOLO(config.modelFile.strip())
+        self.logger = logging.getLogger("doods.yolo."+config.name)
+        self.model = uYOLO(config.modelFile.strip())
         if isinstance(self.model.names, dict):
             self.labels = list(self.model.names.values())
         else:
@@ -29,7 +30,6 @@ class YOLOv8:
         for box in results[0].boxes:
             detection = odrpc.Detection()
             (detection.left, detection.top, detection.right, detection.bottom) = box.xyxy.numpy().tolist()[0]
-            self.logger.info("top: %s, height: %s", detection.top, height)
             detection.top = detection.top / height
             detection.bottom = detection.bottom / height
             detection.left = detection.left / width

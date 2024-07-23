@@ -302,7 +302,7 @@ There are currently 5 supported dectector formats
 - tensorflow - Original tensoflow frozen models (Usually end with `.pb`)
 - pytorch - PyTorch based models like yolov5
 - deepstack - Deepstack models suppor
-- yolov8 - YOLOv8 based models
+- yolo - Ultralytics based models (yolo)
 - tensorflow2 - DISABLED - The libraries required were huge (2.2GB) and it was too slow to be useful for the time being.
 
 ## Other Options
@@ -354,8 +354,8 @@ If you receive a message that says `No module named 'models.yolo'` you are using
 layout. You can fix the issue by downloading this file into your models directory adjacent to your model:
 `https://raw.githubusercontent.com/johnolafenwa/deepstack-trainer/main/models/yolo.py` This should resolve your issue.
 
-## YOLOv8 - .pt files
-Support for Ultralytics YOLOv8 based models. Provide a .pt file as model file in the config. Labels are embedded.
+## YOLO - .pt files
+Support for Ultralytics YOLO based models. Provide a .pt file as model file in the config. Labels are embedded.
 
 ## Tensorflow 2 - Model Directory
 REMOVED: The dependencies for Tensorflow 2 Object detection were massive and it was really slow so I removed it for the time being.
