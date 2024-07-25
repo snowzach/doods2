@@ -30,7 +30,7 @@ class TensorflowLite:
             raise ValueError('numThreads must be greater than or equal to 1')
 
         # Build the first interpreter
-        interpreter = self.buildInterpreter()
+        interpreter = buildInterpreter(self.config.model, self.hwAccel)
 
         self.interpreters.append(interpreter)
 
@@ -46,28 +46,6 @@ class TensorflowLite:
         for i in self.labels:
             self.config.labels.append(self.labels[i])
 
-    def buildInterpreter(self):
-        # Load the Tensorflow Lite model.
-        # If using Edge TPU, use special load_delegate argument
-        if self.hwAccel:
-            from tensorflow.lite.python.interpreter import load_delegate
-            try:
-                interpreter = Interpreter(model_path=self.config.model,
-                    experimental_delegates=[load_delegate('libedgetpu.so.1.0')])
-            # This might fail the first time as this seems to load the drivers for the EdgeTPU the first time.
-            # Doing it again will load the driver. 
-            except ValueError:
-                try:
-                    interpreter = Interpreter(model_path=self.config.model,
-                        experimental_delegates=[load_delegate('libedgetpu.so.1.0')])
-                except ValueError:
-                    raise ValueError('Could not load EdgeTPU detector')
-        else:
-            interpreter = Interpreter(model_path=self.config.model)
-        
-        interpreter.allocate_tensors()
-        return interpreter
-
     def detect(self, image):
        
         image_resized = cv2.resize(image, (self.config.width, self.config.height))
@@ -81,7 +59,7 @@ class TensorflowLite:
         with self.mutex:
             if not self.interpreters:
                 if self.poolSize < self.numThreads:
-                    self.interpreters.append(self.buildInterpreter())
+                    self.interpreters.append(buildInterpreter(self.config.model, self.hwAccel))
                     self.poolSize += 1
                 else: 
                     self.interpreter_available.wait(None)
@@ -148,3 +126,24 @@ class TensorflowLite:
 
         return ret
 
+def buildInterpreter(model: str, hwAccel: bool = False):
+        # Load the Tensorflow Lite model.
+        # If using Edge TPU, use special load_delegate argument
+        if hwAccel:
+            from tensorflow.lite.python.interpreter import load_delegate
+            try:
+                interpreter = Interpreter(model_path=model,
+                    experimental_delegates=[load_delegate('libedgetpu.so.1.0')])
+            # This might fail the first time as this seems to load the drivers for the EdgeTPU the first time.
+            # Doing it again will load the driver. 
+            except ValueError:
+                try:
+                    interpreter = Interpreter(model_path=model,
+                        experimental_delegates=[load_delegate('libedgetpu.so.1.0')])
+                except ValueError:
+                    raise ValueError('Could not load EdgeTPU detector')
+        else:
+            interpreter = Interpreter(model_path=model)
+        
+        interpreter.allocate_tensors()
+        return interpreter
