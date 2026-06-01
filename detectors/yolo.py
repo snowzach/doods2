@@ -40,7 +40,7 @@ class YOLO:
 
         for box in results[0].boxes:
             detection = odrpc.Detection()
-            (detection.left, detection.top, detection.right, detection.bottom) = box.xyxy.numpy().tolist()[0]
+            (detection.left, detection.top, detection.right, detection.bottom) = box.xyxy.detach().cpu().numpy().tolist()[0]
             detection.top = detection.top / height
             detection.bottom = detection.bottom / height
             detection.left = detection.left / width
