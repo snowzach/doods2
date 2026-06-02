@@ -7,3 +7,4 @@ PyYAML>=6.0
 opencv_python>=4.5.0
 typing_extensions>=4.0.0
 prometheus_fastapi_instrumentator>=5.7.1
+ultralytics>=8.3.53
